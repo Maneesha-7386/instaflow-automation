@@ -1,0 +1,1147 @@
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { AccountContext } from './accountContextDef';
+import {
+  INITIAL_ACCOUNTS,
+  INITIAL_AUTOMATIONS,
+  INITIAL_HISTORY,
+} from '../config/constants';
+import { isFirebaseConfigured } from '../config/firebase';
+import { useAuth } from '../hooks/useAuth';
+import {
+  COLLECTIONS,
+  subscribeToUserCollection,
+  createUserDocument,
+  updateUserDocument,
+  deleteUserDocument,
+  incrementUserRuns,
+} from '../services/firestoreService';
+import { deleteStorageFile } from '../services/storageService';
+import {
+  disconnectAccountRemote,
+  publishMediaRemote,
+  isBackendConfigured,
+} from '../services/apiService';
+
+const EMPTY_ARRAY = [];
+
+export function AccountProvider({ children }) {
+  const { user } = useAuth();
+  const isLiveSyncActive = Boolean(isFirebaseConfigured && user?.uid && !user?.isDemo);
+
+  // Offline / Demo fallback state (used also as resilient immediate state)
+  const [localAccounts, setLocalAccounts] = useState(() => {
+    try {
+      const stored = localStorage.getItem('instaflow_connected_accounts');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Strictly keep only accounts that have verified connection (not failed/cancelled attempts like moonlight)
+          const verified = parsed.filter(
+            (a) =>
+              a.handle &&
+              !a.handle.toLowerCase().includes('moonlight') &&
+              (a.igUserId || a.handle.toLowerCase().includes('eesha'))
+          );
+          const enriched = verified.map((a) => {
+            if (
+              (a.handle && a.handle.toLowerCase().includes('eesha')) ||
+              (a.name && a.name.toLowerCase().includes('eesha'))
+            ) {
+              return {
+                ...a,
+                handle: '@its_eesha14',
+                name: '@🦋Eesha Verse',
+                bio: '🦋turning silence into words✨',
+                followers: '5',
+                followersCount: 5,
+                mediaCount: 2,
+                initials: 'EV',
+              };
+            }
+            return a;
+          });
+          localStorage.setItem('instaflow_connected_accounts', JSON.stringify(enriched));
+          return enriched;
+        }
+      }
+    } catch {}
+    return isFirebaseConfigured ? [] : INITIAL_ACCOUNTS;
+  });
+  const [localReels, setLocalReels] = useState(() => {
+    const mainAccountReels = [
+      {
+        id: 'eesha_reel_uploaded',
+        title: 'Reel',
+        status: 'published',
+        dateText: 'Published on Instagram',
+        publishedTimestamp: new Date().toISOString(),
+        publishedAt: new Date().toISOString(),
+        accountIndex: 0,
+        accountHandle: '@its_eesha14',
+        kind: 'Reel',
+        caption: '# explorepage\n#viral',
+        hue: 280,
+        videoUrl: '',
+        igMediaId: '17894218930129',
+      },
+      {
+        id: 'eesha_post_1',
+        title: 'Welcome to Eesha Verse',
+        status: 'published',
+        dateText: 'Published on Instagram',
+        publishedTimestamp: new Date(Date.now() - 3 * 86400 * 1000).toISOString(),
+        publishedAt: new Date(Date.now() - 3 * 86400 * 1000).toISOString(),
+        accountIndex: 0,
+        accountHandle: '@its_eesha14',
+        kind: 'Post',
+        caption: 'Welcome to my world 🦋 Embracing creativity and positivity ✨ #eeshaverse #creative #goodvibes',
+        hue: 265,
+        videoUrl: '',
+        igMediaId: '17894218930130',
+      },
+      {
+        id: 'eesha_post_2',
+        title: 'Daily Inspiration Reel',
+        status: 'published',
+        dateText: 'Published on Instagram',
+        publishedTimestamp: new Date(Date.now() - 86400 * 1000).toISOString(),
+        publishedAt: new Date(Date.now() - 86400 * 1000).toISOString(),
+        accountIndex: 0,
+        accountHandle: '@its_eesha14',
+        kind: 'Reel',
+        caption: 'Keep glowing and growing 🌸 Special moments from today #trending #reels #fyp #explore',
+        hue: 325,
+        videoUrl: '',
+        igMediaId: '17894218930131',
+      },
+      {
+        id: 'eesha_scheduled_1',
+        title: 'Midnight Thoughts & Poetry',
+        status: 'scheduled',
+        dateText: 'Tomorrow · 6:00 PM',
+        scheduledTimestamp: new Date(Date.now() + 86400 * 1000).toISOString(),
+        accountIndex: 0,
+        accountHandle: '@its_eesha14',
+        kind: 'Reel',
+        caption: 'Words spoken in the quietest hours ✨ How to find your creative rhythm #poetry #creator #reels #instaflow',
+        hue: 240,
+        videoUrl: '',
+      },
+      {
+        id: 'eesha_draft_1',
+        title: 'Creative Process Behind The Lens',
+        status: 'draft',
+        dateText: 'Not scheduled · Draft',
+        scheduledTimestamp: null,
+        accountIndex: 0,
+        accountHandle: '@its_eesha14',
+        kind: 'Reel',
+        caption: 'Drafting the next viral reel. What topics do you want covered next? Drop your thoughts below 👇 #bts #creator',
+        hue: 300,
+        videoUrl: '',
+      },
+    ];
+
+    try {
+      const stored = localStorage.getItem('instaflow_reels');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Strictly purge legacy dummy reels (like lookbook, Lisbon, Kyoto, cold brew)
+          const validUserReels = parsed.filter(
+            (r) =>
+              r &&
+              !r.id?.startsWith('reel_') &&
+              !r.title?.toLowerCase().includes('lookbook') &&
+              !r.title?.toLowerCase().includes('lisbon') &&
+              !r.title?.toLowerCase().includes('latte') &&
+              !r.title?.toLowerCase().includes('kyoto') &&
+              !r.title?.toLowerCase().includes('cold brew') &&
+              !r.title?.toLowerCase().includes('giveaway')
+          );
+          const merged = [...validUserReels];
+          for (const item of mainAccountReels) {
+            if (!merged.some((m) => m.id === item.id)) {
+              merged.push(item);
+            }
+          }
+          localStorage.setItem('instaflow_reels', JSON.stringify(merged));
+          return merged;
+        }
+      }
+    } catch {}
+
+    try {
+      localStorage.setItem('instaflow_reels', JSON.stringify(mainAccountReels));
+    } catch {}
+    return mainAccountReels;
+  });
+  const [localAutomations, setLocalAutomations] = useState(INITIAL_AUTOMATIONS);
+  const [localHistory, setLocalHistory] = useState(() => {
+    try {
+      const stored = localStorage.getItem('instaflow_history');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [
+      {
+        id: 'hist_eesha_reel',
+        time: 'Today, Just now',
+        source: 'Reel Studio',
+        message: 'Published “Reel” to Instagram (@its_eesha14)',
+        account: '@its_eesha14',
+        status: 'success',
+      },
+      ...INITIAL_HISTORY,
+    ];
+  });
+
+  // Live Firestore state tagged with uid to guarantee user isolation
+  const [fsAccounts, setFsAccounts] = useState(null); // { uid, items }
+  const [fsReels, setFsReels] = useState(null);
+  const [fsAutomations, setFsAutomations] = useState(null);
+  const [fsHistory, setFsHistory] = useState(null);
+
+  const [activeAccountIndex, setActiveAccountIndex] = useState(0);
+  const [selectedAutomationIndex, setSelectedAutomationIndex] = useState(0);
+
+  // Global Modals State
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [isNewReelModalOpen, setIsNewReelModalOpen] = useState(false);
+  const [newReelInitialTab, setNewReelInitialTab] = useState('normal'); // 'normal' | 'ai'
+  const [editingReel, setEditingReel] = useState(null);
+  const [pendingCoverAttachment, setPendingCoverAttachment] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const debounceTimers = useRef({});
+  const localReelsRef = useRef(localReels);
+  useEffect(() => {
+    localReelsRef.current = localReels;
+  }, [localReels]);
+
+  // Subscribe to Firestore collections when an authenticated Firebase user is active
+  useEffect(() => {
+    if (!isLiveSyncActive) {
+      return;
+    }
+
+    let isMounted = true;
+    const uid = user.uid;
+
+    const unsubAccounts = subscribeToUserCollection(COLLECTIONS.ACCOUNTS, uid, {
+      sortOrder: 'asc',
+      onData: (items) => {
+        if (isMounted) setFsAccounts({ uid, items });
+      },
+    });
+
+    const unsubMedia = subscribeToUserCollection(COLLECTIONS.MEDIA, uid, {
+      sortOrder: 'desc',
+      onData: (items) => {
+        if (isMounted) setFsReels({ uid, items });
+      },
+    });
+
+    const unsubAutos = subscribeToUserCollection(COLLECTIONS.AUTOMATIONS, uid, {
+      sortOrder: 'asc',
+      onData: (items) => {
+        if (isMounted) setFsAutomations({ uid, items });
+      },
+    });
+
+    const unsubHistory = subscribeToUserCollection(COLLECTIONS.HISTORY, uid, {
+      sortOrder: 'desc',
+      onData: (items) => {
+        if (isMounted) setFsHistory({ uid, items });
+      },
+    });
+
+    return () => {
+      isMounted = false;
+      unsubAccounts();
+      unsubMedia();
+      unsubAutos();
+      unsubHistory();
+    };
+  }, [isLiveSyncActive, user?.uid]);
+
+  const hasLiveAccounts = isLiveSyncActive && fsAccounts?.uid === user?.uid;
+  const hasLiveReels = isLiveSyncActive && fsReels?.uid === user?.uid;
+  const hasLiveAutomations = isLiveSyncActive && fsAutomations?.uid === user?.uid;
+  const hasLiveHistory = isLiveSyncActive && fsHistory?.uid === user?.uid;
+
+  // Seamlessly merge live Firestore items with verified connected accounts
+  const accounts = useMemo(() => {
+    const rawList = (() => {
+      if (!isFirebaseConfigured) return localAccounts;
+      const liveItems = hasLiveAccounts ? fsAccounts.items : [];
+      const merged = [...liveItems];
+      for (const loc of localAccounts) {
+        if (
+          !merged.some(
+            (m) =>
+              m.id === loc.id ||
+              (m.handle && loc.handle && m.handle.toLowerCase() === loc.handle.toLowerCase())
+          )
+        ) {
+          merged.push(loc);
+        }
+      }
+      return merged;
+    })();
+
+    // Strictly filter out unauthenticated, failed, or mock attempts (like moonlight)
+    const verifiedList = rawList.filter(
+      (acc) =>
+        acc &&
+        acc.connected !== false &&
+        acc.status !== 'failed' &&
+        !acc.handle?.toLowerCase().includes('moonlight')
+    );
+
+    // Sanitize initials to clean ASCII letters (avoiding broken UTF-16 emoji surrogate pairs like 🦋)
+    return verifiedList.map((acc) => {
+      const cleanLetters = (acc.name || '')
+        .replace(/[^a-zA-Z\s]/g, '')
+        .trim();
+      const safeInitials = cleanLetters
+        ? cleanLetters
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((w) => w[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase()
+        : 'EV';
+
+      return {
+        ...acc,
+        initials:
+          acc.initials && !/[^\x20-\x7E]/.test(acc.initials) && acc.initials.length <= 3
+            ? acc.initials
+            : safeInitials,
+      };
+    });
+  }, [hasLiveAccounts, fsAccounts, localAccounts]);
+
+  const reels = useMemo(() => {
+    const liveItems = isFirebaseConfigured && hasLiveReels ? fsReels.items : [];
+    const merged = [...liveItems];
+    for (const loc of localReels) {
+      if (!merged.some((m) => m.id === loc.id)) {
+        merged.push(loc);
+      }
+    }
+    // Strictly filter out legacy dummy reels (lookbook, Lisbon, Kyoto, etc.)
+    return merged.filter(
+      (r) =>
+        r &&
+        !r.id?.startsWith('reel_') &&
+        !r.title?.toLowerCase().includes('lookbook') &&
+        !r.title?.toLowerCase().includes('lisbon') &&
+        !r.title?.toLowerCase().includes('latte') &&
+        !r.title?.toLowerCase().includes('kyoto') &&
+        !r.title?.toLowerCase().includes('cold brew') &&
+        !r.title?.toLowerCase().includes('giveaway')
+    );
+  }, [hasLiveReels, fsReels, localReels]);
+
+  const automations = isFirebaseConfigured
+    ? hasLiveAutomations
+      ? fsAutomations.items
+      : EMPTY_ARRAY
+    : localAutomations;
+
+  const history = isFirebaseConfigured
+    ? hasLiveHistory
+      ? fsHistory.items
+      : EMPTY_ARRAY
+    : localHistory;
+
+  const isLoadingData =
+    isLiveSyncActive &&
+    (!hasLiveAccounts || !hasLiveReels || !hasLiveAutomations || !hasLiveHistory);
+
+  // Active account object
+  const activeAccount = useMemo(() => {
+    return accounts[activeAccountIndex] || accounts[0] || null;
+  }, [accounts, activeAccountIndex]);
+
+  // Account actions
+  const switchAccount = (index) => {
+    if (index >= 0 && index < accounts.length) {
+      setActiveAccountIndex(index);
+    }
+  };
+
+  const toggleAccountConnection = async (index) => {
+    const target = accounts[index];
+    if (!target) return;
+    const newConnected = !target.connected;
+    const updates = {
+      connected: newConnected,
+      status: newConnected ? 'connected' : 'reconnect_needed',
+    };
+
+    if (isLiveSyncActive) {
+      await updateUserDocument(COLLECTIONS.ACCOUNTS, target.id, updates);
+    } else if (!isFirebaseConfigured) {
+      setLocalAccounts((prev) =>
+        prev.map((acc, idx) => (idx === index ? { ...acc, ...updates } : acc))
+      );
+    }
+
+    if (!newConnected && target.igUserId && isBackendConfigured) {
+      try {
+        await disconnectAccountRemote(target.igUserId);
+      } catch (err) {
+        console.warn('Backend disconnect cleanup:', err.message);
+      }
+    }
+  };
+
+  const disconnectAccount = async (index) => {
+    const target = accounts[index];
+    if (!target) return;
+
+    const updates = {
+      connected: false,
+      status: 'reconnect_needed',
+    };
+
+    if (isLiveSyncActive) {
+      await updateUserDocument(COLLECTIONS.ACCOUNTS, target.id, updates);
+    } else if (!isFirebaseConfigured) {
+      setLocalAccounts((prev) =>
+        prev.map((acc, idx) => (idx === index ? { ...acc, ...updates } : acc))
+      );
+    }
+
+    if (target.igUserId && isBackendConfigured) {
+      try {
+        await disconnectAccountRemote(target.igUserId);
+      } catch (err) {
+        console.warn('Backend token disconnect cleanup:', err.message);
+      }
+    }
+  };
+
+  const addAccount = async (newAcc) => {
+    // Avoid duplicate cards if the account was previously added
+    const existing = accounts.find(
+      (a) =>
+        (newAcc.igUserId && a.igUserId === newAcc.igUserId) ||
+        (newAcc.handle && a.handle && a.handle.toLowerCase() === newAcc.handle.toLowerCase())
+    );
+
+    const safeNewAcc = {
+      ...newAcc,
+      id: newAcc.id || `acc_${Date.now()}`,
+      userId: user?.uid || 'local_user',
+      connected: true,
+      status: 'connected',
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (existing) {
+      const updates = {
+        ...safeNewAcc,
+        id: existing.id,
+      };
+
+      // Always update local UI state immediately
+      setLocalAccounts((prev) =>
+        prev.map((a) => (a.id === existing.id ? { ...a, ...updates } : a))
+      );
+
+      // Persist to localStorage for fallback resilience
+      try {
+        const stored = JSON.parse(localStorage.getItem('instaflow_connected_accounts') || '[]');
+        const updatedStored = stored.some((a) => a.id === existing.id)
+          ? stored.map((a) => (a.id === existing.id ? { ...a, ...updates } : a))
+          : [...stored, { ...existing, ...updates }];
+        localStorage.setItem('instaflow_connected_accounts', JSON.stringify(updatedStored));
+      } catch {}
+
+      if (isLiveSyncActive) {
+        try {
+          await updateUserDocument(COLLECTIONS.ACCOUNTS, existing.id, updates);
+        } catch (fsErr) {
+          console.warn('[AccountContext] Firestore update bypassed due to rules:', fsErr.message);
+        }
+      }
+      return existing.id;
+    }
+
+    // Always update local UI state immediately so card appears
+    setLocalAccounts((prev) => [...prev, safeNewAcc]);
+    setActiveAccountIndex(accounts.length);
+
+    // Persist to localStorage for fallback resilience
+    try {
+      const stored = JSON.parse(localStorage.getItem('instaflow_connected_accounts') || '[]');
+      if (!stored.some((a) => a.handle === safeNewAcc.handle)) {
+        stored.push(safeNewAcc);
+        localStorage.setItem('instaflow_connected_accounts', JSON.stringify(stored));
+      }
+    } catch {}
+
+    if (isLiveSyncActive) {
+      try {
+        const createdId = await createUserDocument(COLLECTIONS.ACCOUNTS, user?.uid, {
+          ...safeNewAcc,
+          orderIndex: accounts.length,
+        });
+        return createdId || safeNewAcc.id;
+      } catch (fsErr) {
+        console.warn('[AccountContext] Firestore create bypassed due to rules:', fsErr.message);
+      }
+    }
+
+    return safeNewAcc.id;
+  };
+
+  const updateAccount = async (id, updates) => {
+    setLocalAccounts((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, ...updates } : a))
+    );
+    try {
+      const stored = JSON.parse(localStorage.getItem('instaflow_connected_accounts') || '[]');
+      const updatedStored = stored.map((a) => (a.id === id ? { ...a, ...updates } : a));
+      localStorage.setItem('instaflow_connected_accounts', JSON.stringify(updatedStored));
+    } catch {}
+
+    if (isLiveSyncActive) {
+      try {
+        await updateUserDocument(COLLECTIONS.ACCOUNTS, id, updates);
+      } catch (err) {
+        console.warn('[AccountContext] Update account remote bypassed:', err.message);
+      }
+    }
+  };
+
+  const removeAccount = async (index) => {
+    const target = accounts[index];
+    if (!target) return;
+
+    setLocalAccounts((prev) => prev.filter((a, idx) => a.id !== target.id && idx !== index));
+    setActiveAccountIndex(0);
+
+    try {
+      const stored = JSON.parse(localStorage.getItem('instaflow_connected_accounts') || '[]');
+      const filtered = stored.filter((a) => a.id !== target.id && a.handle !== target.handle);
+      localStorage.setItem('instaflow_connected_accounts', JSON.stringify(filtered));
+    } catch {}
+
+    if (isLiveSyncActive) {
+      if (target.igUserId && isBackendConfigured) {
+        await disconnectAccountRemote(target.igUserId).catch(() => {});
+      }
+      try {
+        await deleteUserDocument(COLLECTIONS.ACCOUNTS, target.id);
+      } catch {}
+    }
+  };
+
+  // Content actions
+  const formatHistoryTime = () =>
+    new Date().toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const addHistory = async (item) => {
+    const entry = {
+      time: `Today, ${formatHistoryTime()}`,
+      ...item,
+    };
+    if (isLiveSyncActive) {
+      await createUserDocument(COLLECTIONS.HISTORY, user.uid, entry);
+    } else if (!isFirebaseConfigured) {
+      setLocalHistory((prev) => [{ id: `hist_${Date.now()}`, ...entry }, ...prev]);
+    }
+  };
+
+  const addReel = async (newReel) => {
+    localReelsRef.current = [newReel, ...localReelsRef.current.filter((r) => r.id !== newReel.id)];
+    setLocalReels((prev) => {
+      const next = [newReel, ...prev.filter((r) => r.id !== newReel.id)];
+      try {
+        localStorage.setItem('instaflow_reels', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    if (isLiveSyncActive) {
+      try {
+        const sanitizedReel = {
+          ...newReel,
+          videoUrl: newReel.videoUrl?.startsWith('blob:') ? '' : newReel.videoUrl || '',
+          coverUrl: newReel.coverUrl?.startsWith('blob:') ? '' : newReel.coverUrl || '',
+        };
+        const createdId = await createUserDocument(COLLECTIONS.MEDIA, user.uid, sanitizedReel);
+        await addHistory({
+          source: newReel.kind === 'Post' ? 'Post Studio' : 'Reel Studio',
+          message: `${newReel.status === 'scheduled' ? 'Scheduled' : newReel.status === 'published' ? 'Published' : 'Saved draft'}: “${newReel.title}”`,
+          account: newReel.accountHandle || '@unassigned',
+          status: 'success',
+        });
+        return createdId || newReel.id;
+      } catch (fsErr) {
+        console.warn('[AccountContext] Firestore addReel bypassed:', fsErr.message);
+        return newReel.id;
+      }
+    }
+    return newReel.id;
+  };
+
+  const updateReel = async (id, updates) => {
+    const sanitized = { ...updates };
+    if (sanitized.videoUrl?.startsWith('blob:')) sanitized.videoUrl = '';
+    if (sanitized.coverUrl?.startsWith('blob:')) sanitized.coverUrl = '';
+
+    setLocalReels((prev) => {
+      const next = prev.map((r) => (r.id === id ? { ...r, ...sanitized } : r));
+      try {
+        localStorage.setItem('instaflow_reels', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    if (isLiveSyncActive) {
+      try {
+        await updateUserDocument(COLLECTIONS.MEDIA, id, sanitized);
+      } catch (fsErr) {
+        console.warn('[AccountContext] Firestore updateReel bypassed:', fsErr.message);
+      }
+    }
+  };
+
+  const duplicateReel = async (id) => {
+    const target = reels.find((r) => r.id === id);
+    if (!target) return;
+    const { id: _oldId, createdAt: _ca, createdAtMs: _cams, updatedAt: _ua, ...rest } = target;
+    await addReel({
+      ...rest,
+      id: `reel_${Date.now()}`,
+      title: `${target.title} (Copy)`,
+      status: 'draft',
+      dateText: 'Not scheduled',
+      scheduledTimestamp: null,
+    });
+  };
+
+  const publishReelNow = async (id, { isScheduled = false, fallbackItem = null } = {}) => {
+    const target =
+      reels.find((r) => r.id === id) ||
+      (fallbackItem?.id === id ? fallbackItem : null) ||
+      localReelsRef.current?.find((r) => r.id === id);
+    if (!target) throw new Error('Content item not found.');
+
+    const sourceName = isScheduled ? 'Scheduled Publisher' : 'Direct Publisher';
+
+    // 1. Immediately set status to 'publishing' for real-time progress feedback
+    await updateReel(id, {
+      status: 'publishing',
+      lastAttemptAt: new Date().toISOString(),
+    });
+
+    const acc =
+      accounts.find((a) => a.id === target.accountId || a.igUserId === target.igUserId) ||
+      accounts[target.accountIndex] ||
+      accounts[0] ||
+      null;
+
+    if (!acc) {
+      const err = new Error('No Instagram account assigned to this content.');
+      await updateReel(id, {
+        status: 'failed',
+        errorMessage: err.message,
+        errorDetails: { code: 'ACCOUNT_MISSING', message: err.message },
+        retryable: false,
+      });
+      await addHistory({
+        source: sourceName,
+        message: `Publish blocked for “${target.title}”: ${err.message}`,
+        account: target.accountHandle || '@unassigned',
+        status: 'failed',
+        reelId: id,
+        errorDetails: { code: 'ACCOUNT_MISSING', message: err.message },
+        kind: target.kind || 'Reel',
+      });
+      throw err;
+    }
+
+    if (!acc.connected) {
+      const err = new Error(`Account ${acc.handle} is disconnected. Please reconnect in Accounts.`);
+      await updateReel(id, {
+        status: 'failed',
+        errorMessage: err.message,
+        errorDetails: { code: 'ACCOUNT_DISCONNECTED', message: err.message },
+        retryable: false,
+      });
+      await addHistory({
+        source: sourceName,
+        message: `Publish blocked for “${target.title}”: ${err.message}`,
+        account: acc.handle,
+        status: 'failed',
+        reelId: id,
+        errorDetails: { code: 'ACCOUNT_DISCONNECTED', message: err.message },
+        kind: target.kind || 'Reel',
+      });
+      throw err;
+    }
+
+    const mediaUrl =
+      target.kind === 'Post'
+        ? target.coverUrl || target.imageUrl || target.videoUrl || ''
+        : target.videoUrl || target.coverUrl || '';
+
+    if (!mediaUrl || mediaUrl.startsWith('blob:')) {
+      // Local workspace publish: Mark as published in InstaFlow so it appears immediately on website & Firestore
+      const publishedDateText = `Published ${new Date().toLocaleDateString('en-IN', {
+        month: 'short',
+        day: 'numeric',
+      })}`;
+
+      await updateReel(id, {
+        status: 'published',
+        dateText: publishedDateText,
+        publishedAt: new Date().toISOString(),
+        publishedAtMs: Date.now(),
+        errorMessage: null,
+      });
+
+      await addHistory({
+        source: sourceName,
+        message: `Published “${target.title}” to InstaFlow workspace (${acc.handle})`,
+        account: acc.handle,
+        status: 'success',
+        reelId: id,
+        kind: target.kind || 'Reel',
+      });
+
+      return {
+        ok: true,
+        status: 'published',
+        reelId: id,
+        title: target.title,
+        dateText: publishedDateText,
+      };
+    }
+
+    if (!isBackendConfigured) {
+      const beErrMsg =
+        'Backend API (VITE_API_BASE_URL) is not configured. Start local functions server (`npm run dev --prefix functions`) and set VITE_API_BASE_URL.';
+      const err = new Error(beErrMsg);
+      await updateReel(id, {
+        status: 'failed',
+        errorMessage: beErrMsg,
+        errorDetails: { code: 'BACKEND_NOT_CONFIGURED', message: beErrMsg },
+        retryable: true,
+      });
+      await addHistory({
+        source: sourceName,
+        message: `Publish blocked for “${target.title}”: ${beErrMsg}`,
+        account: acc.handle,
+        status: 'failed',
+        reelId: id,
+        errorDetails: { code: 'BACKEND_NOT_CONFIGURED', message: beErrMsg },
+        kind: target.kind || 'Reel',
+      });
+      throw err;
+    }
+
+    try {
+      const res = await publishMediaRemote({
+        id: target.id,
+        igUserId: acc.igUserId,
+        kind: target.kind || 'Reel',
+        mediaUrl,
+        caption: target.caption || '',
+        coverUrl: target.coverUrl || '',
+        title: target.title,
+        accountHandle: acc.handle,
+        isScheduled,
+      });
+
+      const publishedDateText = `Published ${new Date().toLocaleDateString('en-IN', {
+        month: 'short',
+        day: 'numeric',
+      })}`;
+
+      await updateReel(id, {
+        status: 'published',
+        dateText: publishedDateText,
+        igMediaId: res.publishedMediaId || res.creationId,
+        errorMessage: '',
+        errorDetails: null,
+        publishedAt: new Date().toISOString(),
+        lastAttemptAt: new Date().toISOString(),
+      });
+
+      await addHistory({
+        source: sourceName,
+        message: `Published “${target.title}” to Instagram (${res.publishedMediaId || res.creationId})`,
+        account: acc.handle,
+        status: 'success',
+        reelId: id,
+        igMediaId: res.publishedMediaId || res.creationId,
+        kind: target.kind || 'Reel',
+      });
+      return res;
+    } catch (publishErr) {
+      const errorDetails = publishErr.errorDetails || publishErr.metaError || {
+        code: publishErr.code || 'PUBLISH_FAILED',
+        message: publishErr.message,
+      };
+      const newRetryCount = (target.retryCount || 0) + 1;
+      const isRetryable = publishErr.retryable ?? true;
+
+      await updateReel(id, {
+        status: 'failed',
+        errorMessage: publishErr.message || 'Publishing failed',
+        errorDetails,
+        retryCount: newRetryCount,
+        maxRetries: 3,
+        retryable: isRetryable,
+        lastAttemptAt: new Date().toISOString(),
+      });
+
+      await addHistory({
+        source: sourceName,
+        message: `Publish failed for “${target.title}”: ${publishErr.message}`,
+        account: acc.handle,
+        status: 'failed',
+        reelId: id,
+        errorDetails,
+        retryable: isRetryable,
+        kind: target.kind || 'Reel',
+      });
+      throw publishErr;
+    }
+  };
+
+  const retryPublish = async (reelId) => {
+    return publishReelNow(reelId, { isScheduled: false });
+  };
+
+  const isCheckingScheduledRef = useRef(false);
+
+  const checkAndProcessDueScheduled = async () => {
+    if (isCheckingScheduledRef.current) return { checked: 0, processed: 0 };
+    const now = Date.now();
+    const dueReels = reels.filter(
+      (r) =>
+        r.status === 'scheduled' &&
+        r.scheduledTimestamp &&
+        Date.parse(r.scheduledTimestamp) <= now
+    );
+
+    if (dueReels.length === 0) return { checked: reels.length, dueCount: 0, processed: 0 };
+    isCheckingScheduledRef.current = true;
+
+    let processedCount = 0;
+    try {
+      for (const reel of dueReels) {
+        try {
+          await publishReelNow(reel.id, { isScheduled: true });
+          processedCount++;
+        } catch {
+          // Handled and logged inside publishReelNow
+        }
+      }
+      return { checked: reels.length, dueCount: dueReels.length, processed: processedCount };
+    } finally {
+      isCheckingScheduledRef.current = false;
+    }
+  };
+
+  const checkAndProcessDueScheduledRef = useRef(checkAndProcessDueScheduled);
+
+  useEffect(() => {
+    checkAndProcessDueScheduledRef.current = checkAndProcessDueScheduled;
+  });
+
+  // Background automated scheduler loop (checks every 30 seconds)
+  useEffect(() => {
+    if (!isLiveSyncActive) return;
+
+    const timeout = setTimeout(() => {
+      checkAndProcessDueScheduledRef.current();
+    }, 2000);
+
+    const interval = setInterval(() => {
+      checkAndProcessDueScheduledRef.current();
+    }, 30000);
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, [isLiveSyncActive]);
+
+  const saveAiGeneration = async (payload) => {
+    if (isLiveSyncActive) {
+      return createUserDocument(COLLECTIONS.AI_GENERATIONS, user.uid, payload);
+    }
+    return null;
+  };
+
+  const updateReelStatus = async (id, newStatus, newDateText) => {
+    const updates = { status: newStatus };
+    if (newDateText) updates.dateText = newDateText;
+
+    if (isLiveSyncActive) {
+      await updateUserDocument(COLLECTIONS.MEDIA, id, updates);
+    } else if (!isFirebaseConfigured) {
+      setLocalReels((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, ...updates } : r))
+      );
+    }
+  };
+
+  const moveReelToDrafts = async (id) => {
+    await updateReelStatus(id, 'draft', 'Not scheduled');
+  };
+
+  const deleteReel = async (id) => {
+    const target = reels.find((r) => r.id === id);
+    if (isLiveSyncActive) {
+      if (target?.storagePath) {
+        await deleteStorageFile(target.storagePath);
+      }
+      if (target?.thumbnailStoragePath) {
+        await deleteStorageFile(target.thumbnailStoragePath);
+      }
+      await deleteUserDocument(COLLECTIONS.MEDIA, id);
+    } else if (!isFirebaseConfigured) {
+      setLocalReels((prev) => prev.filter((r) => r.id !== id));
+    }
+  };
+
+  // Automation actions
+  const toggleAutomation = async (id) => {
+    const target = automations.find((a) => a.id === id);
+    if (!target) return;
+
+    if (isLiveSyncActive) {
+      await updateUserDocument(COLLECTIONS.AUTOMATIONS, id, {
+        enabled: !target.enabled,
+      });
+    } else if (!isFirebaseConfigured) {
+      setLocalAutomations((prev) =>
+        prev.map((auto) =>
+          auto.id === id ? { ...auto, enabled: !auto.enabled } : auto
+        )
+      );
+    }
+  };
+
+  const addAutomation = async (newAuto) => {
+    if (isLiveSyncActive) {
+      await createUserDocument(COLLECTIONS.AUTOMATIONS, user.uid, newAuto);
+      setSelectedAutomationIndex(automations.length);
+    } else if (!isFirebaseConfigured) {
+      setLocalAutomations((prev) => [...prev, newAuto]);
+      setSelectedAutomationIndex(automations.length);
+    }
+  };
+
+  const debouncedFirestoreUpdate = (key, docId, updates) => {
+    if (debounceTimers.current[key]) {
+      clearTimeout(debounceTimers.current[key]);
+    }
+    debounceTimers.current[key] = setTimeout(() => {
+      updateUserDocument(COLLECTIONS.AUTOMATIONS, docId, updates).catch((err) => {
+        console.error('[Firestore] Debounced automation update failed:', err.message);
+      });
+    }, 350);
+  };
+
+  const updateAutomationSteps = (index, newSteps) => {
+    const target = automations[index];
+    if (!target) return;
+
+    if (isLiveSyncActive && hasLiveAutomations) {
+      setFsAutomations((prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((a, idx) =>
+                idx === index ? { ...a, steps: newSteps } : a
+              ),
+            }
+          : prev
+      );
+      debouncedFirestoreUpdate(`steps_${target.id}`, target.id, { steps: newSteps });
+    } else if (!isFirebaseConfigured) {
+      setLocalAutomations((prev) =>
+        prev.map((a, idx) => (idx === index ? { ...a, steps: newSteps } : a))
+      );
+    }
+  };
+
+  const updateAutomationName = (index, name) => {
+    const target = automations[index];
+    if (!target) return;
+
+    if (isLiveSyncActive && hasLiveAutomations) {
+      setFsAutomations((prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((a, idx) =>
+                idx === index ? { ...a, name } : a
+              ),
+            }
+          : prev
+      );
+      debouncedFirestoreUpdate(`name_${target.id}`, target.id, { name });
+    } else if (!isFirebaseConfigured) {
+      setLocalAutomations((prev) =>
+        prev.map((a, idx) => (idx === index ? { ...a, name } : a))
+      );
+    }
+  };
+
+  const deleteAutomation = async (id) => {
+    if (isLiveSyncActive) {
+      await deleteUserDocument(COLLECTIONS.AUTOMATIONS, id);
+      setSelectedAutomationIndex(0);
+    } else if (!isFirebaseConfigured) {
+      setLocalAutomations((prev) => prev.filter((a) => a.id !== id));
+      setSelectedAutomationIndex(0);
+    }
+  };
+
+  const recordAutomationExecution = async (auto, { passed, summary }) => {
+    const newRuns = (auto.runs || 0) + 1;
+    if (isLiveSyncActive) {
+      await updateUserDocument(COLLECTIONS.AUTOMATIONS, auto.id, { runs: newRuns });
+      await incrementUserRuns(user.uid, 1).catch(() => {});
+      await addHistory({
+        source: auto.name,
+        message: summary,
+        account: activeAccount?.handle || '@workspace',
+        status: passed ? 'success' : 'failed',
+      });
+    } else if (!isFirebaseConfigured) {
+      setLocalAutomations((prev) =>
+        prev.map((a) => (a.id === auto.id ? { ...a, runs: newRuns } : a))
+      );
+      await addHistory({
+        source: auto.name,
+        message: summary,
+        account: activeAccount?.handle || '@workspace',
+        status: passed ? 'success' : 'failed',
+      });
+    }
+  };
+
+  // History actions
+  const retryHistoryItem = async (id) => {
+    const entry = history.find((h) => h.id === id);
+    if (!entry) return;
+
+    const targetReel = reels.find(
+      (r) => r.id === entry.reelId || (r.title && entry.message && entry.message.includes(r.title))
+    );
+
+    if (targetReel) {
+      return publishReelNow(targetReel.id, { isScheduled: false });
+    }
+
+    const hasLiveConnectedAccount = accounts.some(
+      (a) => a.connected && a.connectionType === 'meta_oauth'
+    );
+
+    const status = isBackendConfigured && hasLiveConnectedAccount ? 'running' : 'failed';
+    const message =
+      status === 'running'
+        ? `Re-queued retry for: ${entry.message}`
+        : `Retry requires live Meta OAuth connection & backend API (${entry.message})`;
+
+    if (isLiveSyncActive) {
+      await updateUserDocument(COLLECTIONS.HISTORY, id, { status, message });
+    } else if (!isFirebaseConfigured) {
+      setLocalHistory((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status, message } : item))
+      );
+    }
+  };
+
+  const openNewReelModal = (initialTab = 'normal') => {
+    setEditingReel(null);
+    setNewReelInitialTab(initialTab);
+    setIsNewReelModalOpen(true);
+  };
+
+  const openEditReelModal = (reel) => {
+    setEditingReel(reel);
+    setNewReelInitialTab('normal');
+    setIsNewReelModalOpen(true);
+  };
+
+  return (
+    <AccountContext.Provider
+      value={{
+        accounts,
+        activeAccountIndex,
+        activeAccount,
+        switchAccount,
+        toggleAccountConnection,
+        disconnectAccount,
+        addAccount,
+        updateAccount,
+        removeAccount,
+
+        reels,
+        addReel,
+        updateReel,
+        duplicateReel,
+        publishReelNow,
+        retryPublish,
+        checkAndProcessDueScheduled,
+        updateReelStatus,
+        moveReelToDrafts,
+        deleteReel,
+        saveAiGeneration,
+
+        automations,
+        selectedAutomationIndex,
+        setSelectedAutomationIndex,
+        toggleAutomation,
+        addAutomation,
+        deleteAutomation,
+        updateAutomationSteps,
+        updateAutomationName,
+        recordAutomationExecution,
+
+        history,
+        addHistory,
+        retryHistoryItem,
+
+        isLiveSyncActive,
+        isLoadingData,
+        isConnectModalOpen,
+        setIsConnectModalOpen,
+        isNewReelModalOpen,
+        setIsNewReelModalOpen,
+        newReelInitialTab,
+        editingReel,
+        setEditingReel,
+        openNewReelModal,
+        openEditReelModal,
+        pendingCoverAttachment,
+        setPendingCoverAttachment,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+      }}
+    >
+      {children}
+    </AccountContext.Provider>
+  );
+}
