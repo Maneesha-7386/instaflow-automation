@@ -68,10 +68,6 @@ async function requestBackend(endpoint, { method = 'POST', body = null, requireA
   }
 }
 
-export function getBackendHealth() {
-  return requestBackend('apiHealth', { method: 'GET', requireAuth: false });
-}
-
 export function exchangeMetaOAuthCode(code, redirectUri, refInfo = {}) {
   return requestBackend('exchangeMetaCode', {
     body: {
@@ -101,31 +97,6 @@ export function disconnectAccountRemote(igUserId) {
 
 export function publishMediaRemote(payload) {
   return requestBackend('publishInstagramMedia', {
-    body: payload,
-  });
-}
-
-export function processScheduledMediaRemote(payload = {}) {
-  return requestBackend('processScheduledMedia', {
-    body: payload,
-  });
-}
-
-export function retryPublishMediaRemote(payload) {
-  return requestBackend('retryPublishMedia', {
-    body: payload,
-  });
-}
-
-export function validateScheduleRemote(payload) {
-  return requestBackend('validateSchedule', {
-    body: payload,
-    requireAuth: false,
-  });
-}
-
-export function saveTestVaultTokenRemote(payload) {
-  return requestBackend('saveTestVaultToken', {
     body: payload,
   });
 }
