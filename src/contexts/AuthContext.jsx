@@ -13,6 +13,10 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
 } from 'firebase/auth';
 import {
   syncUserProfile,
@@ -145,7 +149,7 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const loginWithEmail = async (email, password) => {
+  const loginWithEmail = async (email, password, rememberMe = true) => {
     setAuthError(null);
     if (!isFirebaseConfigured || !auth) {
       setUser({
@@ -161,8 +165,42 @@ export function AuthProvider({ children }) {
     }
 
     try {
+      try {
+        await setPersistence(
+          auth,
+          rememberMe ? browserLocalPersistence : browserSessionPersistence
+        );
+      } catch (persistErr) {
+        console.warn('[InstaFlow] Auth persistence set warning:', persistErr.message);
+      }
       const cred = await signInWithEmailAndPassword(auth, email, password);
       return { success: true, user: cred.user };
+    } catch (err) {
+      const msg = formatAuthError(err);
+      setAuthError(msg);
+      return { success: false, error: msg };
+    }
+  };
+
+  const resetPassword = async (email) => {
+    setAuthError(null);
+    if (!email || !email.includes('@')) {
+      return { success: false, error: 'Please enter a valid email address.' };
+    }
+    if (!isFirebaseConfigured || !auth) {
+      return {
+        success: true,
+        mode: 'demo',
+        message: `Password reset simulation: reset link would be sent to ${email}`,
+      };
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return {
+        success: true,
+        message: `Password reset email sent to ${email}. Check your inbox!`,
+      };
     } catch (err) {
       const msg = formatAuthError(err);
       setAuthError(msg);
@@ -254,6 +292,7 @@ export function AuthProvider({ children }) {
         isFirebaseLive: isFirebaseConfigured,
         loginWithEmail,
         registerWithEmail,
+        resetPassword,
         loginWithGoogle,
         logout,
         setDemoSession,
