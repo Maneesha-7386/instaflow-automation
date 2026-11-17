@@ -13,27 +13,39 @@ export default function DashboardView({ onNavigate }) {
     accounts[0] ||
     null;
 
-  const publishedFeed = reels.filter(
-    (r) =>
-      r.status === 'published' &&
-      (!r.accountHandle ||
-        r.accountHandle === primaryAccount?.handle ||
-        r.accountId === primaryAccount?.id)
-  );
+  const cleanPrimaryHandle = (primaryAccount?.handle || '').replace(/^@+/, '').toLowerCase();
 
-  const scheduledCount = reels.filter(
-    (r) => r.status === 'scheduled' || r.status === 'publishing'
-  ).length;
+  const publishedFeed = reels.filter((r) => {
+    if (r.status !== 'published') return false;
+    if (!r.accountHandle) return true;
+    const cleanReelHandle = r.accountHandle.replace(/^@+/, '').toLowerCase();
+    return (
+      cleanReelHandle === cleanPrimaryHandle ||
+      r.accountId === primaryAccount?.id ||
+      !cleanPrimaryHandle
+    );
+  });
+
+  const scheduledFeed = reels.filter((r) => {
+    const isScheduled = r.status === 'scheduled' || r.status === 'publishing';
+    if (!isScheduled) return false;
+    if (!r.accountHandle) return true;
+    const cleanReelHandle = r.accountHandle.replace(/^@+/, '').toLowerCase();
+    return (
+      cleanReelHandle === cleanPrimaryHandle ||
+      r.accountId === primaryAccount?.id ||
+      !cleanPrimaryHandle
+    );
+  });
+
+  const scheduledCount = scheduledFeed.length;
   const liveMediaFromAccounts = accounts.reduce((acc, a) => acc + (a.mediaCount || 0), 0);
-  const publishedReelsCount = reels.filter((r) => r.status === 'published').length;
-  const publishedCount = Math.max(publishedReelsCount, liveMediaFromAccounts);
+  const publishedCount = Math.max(publishedFeed.length, primaryAccount?.mediaCount || 0);
   const accountPostsCount = primaryAccount?.mediaCount ?? publishedCount;
   const accountFollowers = primaryAccount?.followers || '0';
   const totalItemsCount = scheduledCount + publishedCount;
   const connectedAccountsCount = accounts.filter((a) => a.connected).length;
-  const upNextList = reels
-    .filter((r) => r.status === 'scheduled' || r.status === 'publishing')
-    .slice(0, 4);
+  const upNextList = scheduledFeed.slice(0, 4);
   const totalAutomationRuns = automations.reduce((acc, a) => acc + (a.runs || 0), 0);
   const activeAutomationsCount = automations.filter((a) => a.enabled).length;
   const successHistoryCount = history.filter((h) => h.status === 'success').length;
@@ -322,24 +334,40 @@ export default function DashboardView({ onNavigate }) {
                 {/* 9:12 Aspect Media Preview */}
                 <div
                   className="relative aspect-[9/12] flex flex-col justify-between p-2.5 text-white select-none overflow-hidden"
-                  style={getGradientStyle(item.hue)}
+                  style={item.videoUrl || item.coverUrl ? { background: '#000' } : getGradientStyle(item.hue)}
                 >
+                  {item.videoUrl ? (
+                    <video
+                      src={item.videoUrl}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : item.coverUrl ? (
+                    <img
+                      src={item.coverUrl}
+                      alt={item.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : null}
+
                   <div className="flex items-center justify-between z-10">
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-black/60 backdrop-blur-xs text-white">
-                      {item.kind || 'Reel'}
+                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-black/70 backdrop-blur-xs text-white">
+                      {item.kind || 'Reel'} {item.igMediaId ? `#${item.igMediaId.slice(-4)}` : ''}
                     </span>
-                    <span className="text-[10px] bg-black/50 px-1 rounded text-white/90">
-                      ✓ live
+                    <span className="text-[10px] bg-black/60 px-1.5 py-0.5 rounded text-emerald-400 font-bold backdrop-blur-xs">
+                      ● live
                     </span>
                   </div>
 
-                  <div className="self-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-xs shadow-md group-hover:scale-110 transition-transform">
+                  <div className="self-center w-8 h-8 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-xs shadow-md group-hover:scale-110 transition-transform z-10">
                     ▶
                   </div>
 
-                  <div className="z-10 flex items-center justify-between text-[10px] font-semibold text-white/90 drop-shadow">
-                    <span>❤️ {item.likes || 120}</span>
-                    <span>👁️ {item.views || '1.5K'}</span>
+                  <div className="z-10 flex items-center justify-between text-[10px] font-bold text-white drop-shadow">
+                    <span>❤️ {item.likes || 18}</span>
+                    <span>👁️ {item.views || '1.8K'}</span>
                   </div>
                 </div>
 
@@ -456,17 +484,34 @@ export default function DashboardView({ onNavigate }) {
             {/* Visual Preview */}
             <div
               className="w-full md:w-56 aspect-[9/14] rounded-2xl flex flex-col justify-between p-4 text-white shrink-0 shadow-lg relative overflow-hidden"
-              style={getGradientStyle(previewItem.hue)}
+              style={previewItem.videoUrl || previewItem.coverUrl ? { background: '#000' } : getGradientStyle(previewItem.hue)}
             >
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/60 backdrop-blur-xs self-start">
-                {previewItem.kind || 'Reel'}
+              {previewItem.videoUrl ? (
+                <video
+                  src={previewItem.videoUrl}
+                  controls
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : previewItem.coverUrl ? (
+                <img
+                  src={previewItem.coverUrl}
+                  alt={previewItem.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : null}
+
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 backdrop-blur-xs self-start z-10">
+                {previewItem.kind || 'Reel'} {previewItem.igMediaId ? `#${previewItem.igMediaId.slice(-4)}` : ''}
               </span>
 
-              <div className="self-center w-12 h-12 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-lg shadow-xl">
-                ▶
-              </div>
+              {!previewItem.videoUrl && (
+                <div className="self-center w-12 h-12 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-lg shadow-xl z-10">
+                  ▶
+                </div>
+              )}
 
-              <div className="text-[11px] font-semibold drop-shadow">
+              <div className="text-[11px] font-semibold drop-shadow z-10">
                 <span>{previewItem.dateText}</span>
               </div>
             </div>

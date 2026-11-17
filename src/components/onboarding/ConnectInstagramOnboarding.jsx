@@ -3,6 +3,7 @@ import { useAccount } from '../../hooks/useAccount';
 import { useToast } from '../../hooks/useToast';
 import { useAuth } from '../../hooks/useAuth';
 import { exchangeMetaOAuthCode } from '../../services/apiService';
+import { generateAccountMedia } from '../../contexts/AccountContext';
 
 // Dynamic Display Name formatter from any handle (e.g. creative_studio -> Creative Studio)
 function formatDisplayName(handle) {
@@ -33,26 +34,25 @@ function generateDynamicAccount(rawHandle, isUpgraded = false) {
   const clean = (rawHandle || 'creator').trim().replace(/^@+/, '');
   const cleanLower = clean.toLowerCase();
 
+  let acc = null;
   // Case 1: Eesha Verse account (CreatorFlow Images 2 & 5)
   if (cleanLower === 'its_eesha14' || cleanLower.includes('eesha')) {
-    return {
+    acc = {
       handle: '@its_eesha14',
       name: '@ 🦋 Eesha Verse',
       bio: '🦋turning silence into words✨',
       followers: '5',
       followersCount: 5,
-      mediaCount: 2,
+      mediaCount: 3,
       accountType: 'Creator',
       category: 'Digital Creator',
       initials: 'EV',
       color: 'linear-gradient(135deg, #c8ff00 0%, #a3e635 100%)',
       profilePictureUrl: '',
     };
-  }
-
-  // Case 2: Maneesha Chowdary account (CreatorFlow Images 3 & 4)
-  if (cleanLower.includes('maneesha') || cleanLower.includes('chowdary')) {
-    return {
+  } else if (cleanLower.includes('maneesha') || cleanLower.includes('chowdary')) {
+    // Case 2: Maneesha Chowdary account (CreatorFlow Images 3 & 4)
+    acc = {
       handle: `@${clean}`,
       name: 'Maneesha Chowdary',
       bio: isUpgraded
@@ -67,36 +67,39 @@ function generateDynamicAccount(rawHandle, isUpgraded = false) {
       color: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
       profilePictureUrl: '',
     };
+  } else {
+    // Case 3: Any other Instagram Creator account
+    const formattedName = formatDisplayName(clean);
+    const initials = deriveInitials(formattedName, clean);
+
+    let hash = 0;
+    for (let i = 0; i < clean.length; i++) {
+      hash = (hash << 5) - hash + clean.charCodeAt(i);
+      hash |= 0;
+    }
+    const absHash = Math.abs(hash);
+    const followersCount = isUpgraded ? 1400 : (absHash % 500) + 120;
+    const mediaCount = isUpgraded ? 6 : Math.max(2, (absHash % 8) + 2);
+
+    acc = {
+      handle: `@${clean}`,
+      name: formattedName,
+      bio: isUpgraded
+        ? 'Digital Creator ✨ Converted to Professional Account'
+        : `${formattedName} · Instagram Creator ✨ #creator`,
+      followers: followersCount >= 1000 ? `${(followersCount / 1000).toFixed(1)}K` : String(followersCount),
+      followersCount,
+      mediaCount,
+      accountType: 'Creator',
+      category: 'Digital Creator',
+      initials,
+      color: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
+      profilePictureUrl: '',
+    };
   }
 
-  // Case 3: Any other Instagram Creator account
-  const formattedName = formatDisplayName(clean);
-  const initials = deriveInitials(formattedName, clean);
-
-  let hash = 0;
-  for (let i = 0; i < clean.length; i++) {
-    hash = (hash << 5) - hash + clean.charCodeAt(i);
-    hash |= 0;
-  }
-  const absHash = Math.abs(hash);
-  const followersCount = isUpgraded ? 1400 : (absHash % 500) + 120;
-  const mediaCount = isUpgraded ? 6 : Math.max(2, (absHash % 8) + 2);
-
-  return {
-    handle: `@${clean}`,
-    name: formattedName,
-    bio: isUpgraded
-      ? 'Digital Creator ✨ Converted to Professional Account'
-      : `${formattedName} · Instagram Creator ✨ #creator`,
-    followers: followersCount >= 1000 ? `${(followersCount / 1000).toFixed(1)}K` : String(followersCount),
-    followersCount,
-    mediaCount,
-    accountType: 'Creator',
-    category: 'Digital Creator',
-    initials,
-    color: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-    profilePictureUrl: '',
-  };
+  acc.media = generateAccountMedia(acc);
+  return acc;
 }
 
 export default function ConnectInstagramOnboarding({
@@ -327,6 +330,7 @@ export default function ConnectInstagramOnboarding({
       status: 'connected',
       connectionType: 'meta_oauth',
       connectedAt: new Date().toISOString(),
+      media: target.media || generateAccountMedia(target),
     };
 
     try {

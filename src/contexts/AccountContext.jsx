@@ -39,69 +39,176 @@ export function generateAccountMedia(acc) {
   }
 
   const clean = acc.handle.replace(/^@+/, '');
+  const cleanLower = clean.toLowerCase();
   const displayName = acc.name || clean;
-  const count = Math.max(1, Math.min(acc.mediaCount || 4, 18));
+  const accId = acc.id || `acc_${clean}`;
 
-  // Deterministic seed based on handle for consistent stats
-  let hash = 0;
-  for (let i = 0; i < clean.length; i++) {
-    hash = (hash << 5) - hash + clean.charCodeAt(i);
-    hash |= 0;
+  // Case 1: Verified Eesha Verse main account (@its_eesha14)
+  if (cleanLower === 'its_eesha14' || cleanLower.includes('eesha')) {
+    return [
+      {
+        id: 'eesha_reel_uploaded',
+        accountId: accId,
+        accountHandle: acc.handle,
+        accountName: displayName,
+        title: 'Reel',
+        status: 'published',
+        dateText: 'Published on Instagram',
+        publishedTimestamp: new Date().toISOString(),
+        publishedAt: new Date().toISOString(),
+        kind: 'Reel',
+        caption: '# explorepage\n#viral',
+        hue: 280,
+        videoUrl: '',
+        coverUrl: '',
+        likes: 18,
+        comments: 4,
+        views: '1.9K',
+        igMediaId: '17894218930129',
+      },
+      {
+        id: 'eesha_post_1',
+        accountId: accId,
+        accountHandle: acc.handle,
+        accountName: displayName,
+        title: 'Welcome to Eesha Verse',
+        status: 'published',
+        dateText: 'Published 3 days ago',
+        publishedTimestamp: new Date(Date.now() - 3 * 86400 * 1000).toISOString(),
+        publishedAt: new Date(Date.now() - 3 * 86400 * 1000).toISOString(),
+        kind: 'Post',
+        caption: 'Welcome to my world 🦋 Embracing creativity and positivity ✨ #eeshaverse #creative #goodvibes',
+        hue: 265,
+        videoUrl: '',
+        coverUrl: '',
+        likes: 29,
+        comments: 6,
+        igMediaId: '17894218930130',
+      },
+      {
+        id: 'eesha_post_2',
+        accountId: accId,
+        accountHandle: acc.handle,
+        accountName: displayName,
+        title: 'Daily Inspiration Reel',
+        status: 'published',
+        dateText: 'Published Yesterday',
+        publishedTimestamp: new Date(Date.now() - 86400 * 1000).toISOString(),
+        publishedAt: new Date(Date.now() - 86400 * 1000).toISOString(),
+        kind: 'Reel',
+        caption: 'Keep glowing and growing 🌸 Special moments from today #trending #reels #fyp #explore',
+        hue: 325,
+        videoUrl: '',
+        coverUrl: '',
+        likes: 54,
+        comments: 9,
+        views: '3.4K',
+        igMediaId: '17894218930131',
+      },
+      {
+        id: 'eesha_scheduled_1',
+        accountId: accId,
+        accountHandle: acc.handle,
+        accountName: displayName,
+        title: 'Midnight Thoughts & Poetry',
+        status: 'scheduled',
+        dateText: 'Tomorrow · 6:00 PM',
+        scheduledTimestamp: new Date(Date.now() + 86400 * 1000).toISOString(),
+        kind: 'Reel',
+        caption: 'Words spoken in the quietest hours ✨ How to find your creative rhythm #poetry #creator #reels #instaflow',
+        hue: 240,
+        videoUrl: '',
+        coverUrl: '',
+      },
+      {
+        id: 'eesha_draft_1',
+        accountId: accId,
+        accountHandle: acc.handle,
+        accountName: displayName,
+        title: 'Creative Process Behind The Lens',
+        status: 'draft',
+        dateText: 'Not scheduled · Draft',
+        scheduledTimestamp: null,
+        kind: 'Reel',
+        caption: 'Drafting the next viral reel. What topics do you want covered next? Drop your thoughts below 👇 #bts #creator',
+        hue: 300,
+        videoUrl: '',
+        coverUrl: '',
+      },
+    ];
   }
-  const baseHash = Math.abs(hash);
 
-  const dynamicTitles = [
-    'Behind the Scenes & Workflow ✨',
-    'Trending Hook & Storytelling',
-    'Creative Routine Insights',
-    'Visual Aesthetics & Reflections',
-    'Community Highlight & Q&A',
-    'Quick Tips for Creators',
-    'Daily Studio Moments',
-    'Milestone & Gratitude',
-  ];
-
-  return Array.from({ length: count }, (_, idx) => {
-    const isReel = idx % 2 === 0;
-    const title = dynamicTitles[idx % dynamicTitles.length];
-    const daysAgo = idx === 0 ? 1 : idx * 2 + 1;
-    const pubDate = new Date(Date.now() - daysAgo * 86400 * 1000);
-
-    const baseLikes = Math.max(
-      15,
-      Math.round(((acc.followersCount || 100) * 0.08) + ((baseHash + idx * 37) % 85))
-    );
-    const baseComments = Math.max(2, Math.round(baseLikes * 0.12));
-    const viewsCount = isReel ? Math.round(baseLikes * 11.5) : undefined;
-    const viewsText = viewsCount
-      ? viewsCount >= 1000
-        ? `${(viewsCount / 1000).toFixed(1)}K`
-        : String(viewsCount)
-      : undefined;
-
-    const hue = (baseHash + idx * 45) % 360;
-
-    return {
-      id: `media_${acc.id || clean}_${idx + 1}`,
-      accountId: acc.id || `acc_${clean}`,
+  // Case 2: Any other verified connected creator account
+  return [
+    {
+      id: `media_${clean}_1`,
+      accountId: accId,
       accountHandle: acc.handle,
       accountName: displayName,
-      title,
-      kind: isReel ? 'Reel' : 'Post',
+      title: `${clean} Launch Reel`,
+      kind: 'Reel',
       status: 'published',
-      dateText: `Published ${pubDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}`,
-      publishedTimestamp: pubDate.toISOString(),
-      publishedAt: pubDate.toISOString(),
-      caption: `${title} · Sharing the journey with you! #${clean} #creator #aesthetic ${isReel ? '#reels' : ''}`,
-      hue,
-      likes: baseLikes,
-      comments: baseComments,
-      views: viewsText,
-      igMediaId: `1794${Math.floor(1000000000 + (idx + 1) * 87654321)}`,
+      dateText: 'Published on Instagram',
+      publishedTimestamp: new Date().toISOString(),
+      publishedAt: new Date().toISOString(),
+      caption: `Sharing the journey with you all! ✨ #${clean} #instagram #creator #reels #viral`,
+      hue: 280,
+      likes: Math.max(25, Math.round((acc.followersCount || 200) * 0.08)),
+      comments: 6,
+      views: '2.1K',
+      igMediaId: `1794${Math.floor(1000000000 + Math.random() * 9000000000)}`,
       videoUrl: '',
       coverUrl: '',
-    };
-  });
+    },
+    {
+      id: `media_${clean}_2`,
+      accountId: accId,
+      accountHandle: acc.handle,
+      accountName: displayName,
+      title: 'Studio Insights & BTS',
+      kind: 'Post',
+      status: 'published',
+      dateText: 'Published 2 days ago',
+      publishedTimestamp: new Date(Date.now() - 2 * 86400 * 1000).toISOString(),
+      publishedAt: new Date(Date.now() - 2 * 86400 * 1000).toISOString(),
+      caption: `Behind the scenes of our newest creative project. Drop your thoughts below 👇 #${clean}`,
+      hue: 320,
+      likes: Math.max(18, Math.round((acc.followersCount || 200) * 0.05)),
+      comments: 4,
+      igMediaId: `1794${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      videoUrl: '',
+      coverUrl: '',
+    },
+    {
+      id: `media_${clean}_scheduled`,
+      accountId: accId,
+      accountHandle: acc.handle,
+      accountName: displayName,
+      title: 'Upcoming Viral Concept',
+      kind: 'Reel',
+      status: 'scheduled',
+      dateText: 'Tomorrow · 6:00 PM',
+      scheduledTimestamp: new Date(Date.now() + 86400 * 1000).toISOString(),
+      caption: `Automated post scheduled with InstaFlow scheduler ⚡ #${clean} #reels`,
+      hue: 240,
+      videoUrl: '',
+      coverUrl: '',
+    },
+    {
+      id: `media_${clean}_draft`,
+      accountId: accId,
+      accountHandle: acc.handle,
+      accountName: displayName,
+      title: 'Draft Reel Script',
+      kind: 'Reel',
+      status: 'draft',
+      dateText: 'Not scheduled · Draft',
+      caption: `Drafting content in InstaFlow AI Studio ✨ #${clean}`,
+      hue: 300,
+      videoUrl: '',
+      coverUrl: '',
+    },
+  ];
 }
 
 export function AccountProvider({ children }) {
@@ -138,11 +245,28 @@ export function AccountProvider({ children }) {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const hasGenericPlaceholders = parsed.some(
+            (r) =>
+              r.title?.includes('Behind the Scenes & Workflow') ||
+              r.title?.includes('Trending Hook & Storytelling') ||
+              r.id?.startsWith('reel_')
+          );
+          if (!hasGenericPlaceholders) {
+            return parsed;
+          }
         }
       }
     } catch {}
-    return INITIAL_ACCOUNTS[0] ? generateAccountMedia(INITIAL_ACCOUNTS[0]) : [];
+    const primary = localAccounts[0] || {
+      id: 'acc_eesha',
+      handle: '@its_eesha14',
+      name: '@ 🦋 Eesha Verse',
+    };
+    const initialMedia = generateAccountMedia(primary);
+    try {
+      localStorage.setItem('instaflow_reels', JSON.stringify(initialMedia));
+    } catch {}
+    return initialMedia;
   });
   const [localAutomations, setLocalAutomations] = useState(INITIAL_AUTOMATIONS);
   const [localHistory, setLocalHistory] = useState(() => {
