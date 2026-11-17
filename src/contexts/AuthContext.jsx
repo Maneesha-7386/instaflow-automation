@@ -277,6 +277,25 @@ export function AuthProvider({ children }) {
     setUser(DEFAULT_DEMO_USER);
   };
 
+  const initCreatorSession = (creatorInfo = {}) => {
+    const rawHandle = (creatorInfo.handle || 'creator').replace(/^@+/, '');
+    const creatorUser = {
+      uid: 'user_' + Date.now(),
+      email: creatorInfo.email || `${rawHandle}@gmail.com`,
+      displayName: creatorInfo.name || creatorInfo.handle || 'Creator',
+      photoURL: creatorInfo.profilePictureUrl || null,
+      plan: 'Growth plan',
+      runsUsed: 0,
+      runsLimit: 3000,
+      isDemo: false,
+    };
+    setUser(creatorUser);
+    try {
+      localStorage.setItem('instaflow_current_user', JSON.stringify(creatorUser));
+    } catch {}
+    return creatorUser;
+  };
+
   const getIdToken = useCallback(async () => {
     if (!isFirebaseConfigured || !auth?.currentUser) return null;
     return auth.currentUser.getIdToken();
@@ -296,6 +315,7 @@ export function AuthProvider({ children }) {
         loginWithGoogle,
         logout,
         setDemoSession,
+        initCreatorSession,
         getIdToken,
       }}
     >

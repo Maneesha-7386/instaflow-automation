@@ -127,7 +127,7 @@ export default function ReelsView() {
               </span>
             </div>
             <p className="text-xs text-[var(--mu)] m-0 mt-0.5">
-              {activeAccount?.handle || '@its_eesha14'} · {counts.published} published reels ·{' '}
+              {activeAccount?.handle || 'All accounts'} · {counts.published} published reels ·{' '}
               {counts.scheduled} scheduled in queue
             </p>
           </div>
@@ -267,7 +267,7 @@ export default function ReelsView() {
                   {/* Footer metadata */}
                   <div className="flex items-center justify-between z-10 drop-shadow-md">
                     <small className="text-[11px] font-semibold text-white/95 truncate">
-                      {acc?.handle || reel.accountHandle || '@its_eesha14'}
+                      {acc?.handle || reel.accountHandle || activeAccount?.handle || '@creator'}
                     </small>
                     {reel.igMediaId && (
                       <span className="text-[9px] font-mono text-white/80 bg-black/40 px-1 rounded">
@@ -435,7 +435,7 @@ export default function ReelsView() {
           isOpen={Boolean(previewReel)}
           onClose={() => setPreviewReel(null)}
           title={previewReel.title}
-          subtitle={`${previewReel.kind || 'Reel'} · ${previewReel.accountHandle || activeAccount?.handle || '@its_eesha14'} · ${previewReel.dateText}`}
+          subtitle={`${previewReel.kind || 'Reel'} · ${previewReel.accountHandle || activeAccount?.handle || '@creator'} · ${previewReel.dateText}`}
           maxWidth="max-w-[540px]"
         >
           <div className="flex flex-col gap-4">

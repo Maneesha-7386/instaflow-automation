@@ -120,11 +120,23 @@ function AppContent() {
     );
   }
 
-  // Authentication Gate: Require login before entering workspace
-  if (!user) {
+  // 1. Instagram Connection & Meta OAuth Gate:
+  // Shown when explicitly onboarding (#onboarding) or handling Meta OAuth callback (?code=...)
+  const isOnboardingRoute = currentView === 'onboarding';
+  const shouldShowOnboarding = isOnboardingRoute || hasOAuthParams;
+
+  if (shouldShowOnboarding) {
     return (
-      <LoginPage
-        onLoginSuccess={() => {
+      <ConnectInstagramOnboarding
+        onComplete={() => {
+          sessionStorage.setItem('instaflow_skipped_onboarding', 'true');
+          setHasSkippedOnboarding(true);
+          setCurrentView('home');
+          window.location.hash = 'home';
+        }}
+        onSkip={() => {
+          sessionStorage.setItem('instaflow_skipped_onboarding', 'true');
+          setHasSkippedOnboarding(true);
           setCurrentView('home');
           window.location.hash = 'home';
         }}
@@ -132,17 +144,30 @@ function AppContent() {
     );
   }
 
-  // Instagram Connection Gate: If new user / no connected Instagram account / handling OAuth callback
-  if ((!hasConnectedInstagram && !hasSkippedOnboarding) || hasOAuthParams) {
+  // 2. Authentication Gate:
+  // If user is not logged in, OR if user specifically navigated to #signin or #signup:
+  const isAuthRoute =
+    currentView === 'signin' ||
+    currentView === 'signup' ||
+    currentView === 'login' ||
+    currentView === 'register';
+
+  if (!user || isAuthRoute) {
     return (
-      <ConnectInstagramOnboarding
-        onComplete={() => {
-          setCurrentView('home');
-          window.location.hash = 'home';
-        }}
-        onSkip={() => {
-          sessionStorage.setItem('instaflow_skipped_onboarding', 'true');
-          setHasSkippedOnboarding(true);
+      <LoginPage
+        onLoginSuccess={(authMode) => {
+          if (authMode === 'signin') {
+            sessionStorage.setItem('instaflow_skipped_onboarding', 'true');
+            setHasSkippedOnboarding(true);
+            setCurrentView('home');
+            window.location.hash = 'home';
+          } else {
+            // New user Signup -> Enforce Instagram Connection & Business Verification Onboarding
+            sessionStorage.removeItem('instaflow_skipped_onboarding');
+            setHasSkippedOnboarding(false);
+            setCurrentView('onboarding');
+            window.location.hash = 'onboarding';
+          }
         }}
       />
     );

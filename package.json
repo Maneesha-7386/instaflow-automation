@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "backend": "node functions/localServer.js",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"

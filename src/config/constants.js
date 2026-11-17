@@ -13,44 +13,7 @@ export const NAV_ITEMS = [
   { id: 'history', icon: '☰', label: 'History' },
 ];
 
-export const INITIAL_ACCOUNTS = [
-  {
-    id: 'acc_1',
-    handle: '@lumen.studio',
-    name: 'Lumen Studio',
-    followers: '48.2K',
-    connected: true,
-    color: '#6d3df2',
-    initials: 'LS',
-    igUserId: '17841400123456789',
-    category: 'Design & Visual Studio',
-    status: 'connected', // 'connected' | 'reconnect_needed'
-  },
-  {
-    id: 'acc_2',
-    handle: '@urbanbrew.co',
-    name: 'Urban Brew Coffee',
-    followers: '12.7K',
-    connected: true,
-    color: '#d62f8e',
-    initials: 'UB',
-    igUserId: '17841400987654321',
-    category: 'Artisanal Cafe & Roastery',
-    status: 'connected',
-  },
-  {
-    id: 'acc_3',
-    handle: '@tripwithtara',
-    name: 'Tara Travels',
-    followers: '96.4K',
-    connected: false,
-    color: '#e0771f',
-    initials: 'TT',
-    igUserId: '17841400555555555',
-    category: 'Travel & Lifestyle Creator',
-    status: 'reconnect_needed',
-  },
-];
+export const INITIAL_ACCOUNTS = [];
 
 export const WORKFLOW_DEFINITIONS = {
   triggers: [

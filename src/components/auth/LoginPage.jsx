@@ -110,7 +110,7 @@ export default function LoginPage({ onLoginSuccess }) {
             ? `Welcome back, ${displayName || trimmedEmail.split('@')[0]}!`
             : 'Account created successfully! Welcome to InstaFlow.'
         );
-        if (onLoginSuccess) onLoginSuccess();
+        if (onLoginSuccess) onLoginSuccess(mode);
       } else {
         setErrorMsg(res.error || 'Authentication failed. Please verify your credentials.');
       }
@@ -128,7 +128,7 @@ export default function LoginPage({ onLoginSuccess }) {
       setLoading(false);
       if (res.success) {
         showToast('Signed in successfully with Google!');
-        if (onLoginSuccess) onLoginSuccess();
+        if (onLoginSuccess) onLoginSuccess(mode);
       } else {
         setErrorMsg(res.error || 'Google sign-in could not be completed.');
       }
@@ -141,7 +141,7 @@ export default function LoginPage({ onLoginSuccess }) {
   const handleQuickDemo = () => {
     setDemoSession();
     showToast('Entered Demo Workspace as Creator (Lumen Studio)');
-    if (onLoginSuccess) onLoginSuccess();
+    if (onLoginSuccess) onLoginSuccess('signin');
   };
 
   const handleForgotPassword = async (e) => {

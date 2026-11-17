@@ -23,7 +23,7 @@ export default function Header({ currentView }) {
     setIsAuthModalOpen,
   } = useAccount();
 
-  const { user, isFirebaseLive } = useAuth();
+  const { user, isFirebaseLive, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -172,6 +172,25 @@ export default function Header({ currentView }) {
           )}
         </div>
       )}
+
+      {/* Sign Out Button */}
+      <button
+        type="button"
+        onClick={async () => {
+          await logout();
+          sessionStorage.clear();
+          window.location.hash = 'signin';
+        }}
+        className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 cursor-pointer"
+        style={{
+          borderColor: 'var(--ln)',
+          color: 'var(--mu)',
+        }}
+        title="Sign Out to Login Screen"
+      >
+        <span>Sign Out</span>
+        <span>➔</span>
+      </button>
 
       {/* Auth Status & Profile Button */}
       <button

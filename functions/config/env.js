@@ -3,9 +3,35 @@
  * Reads strictly from functions/.env on the server. Never exposes raw secrets to clients.
  */
 const path = require('path');
-const dotenv = require('dotenv');
+const fs = require('fs');
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+// Built-in resilient .env loader
+function loadEnvFile(envPath) {
+  try {
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf8');
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx > 0) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          const val = trimmed.slice(eqIdx + 1).trim();
+          if (!process.env[key]) {
+            process.env[key] = val;
+          }
+        }
+      }
+    }
+  } catch {}
+}
+
+try {
+  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+} catch {
+  loadEnvFile(path.resolve(__dirname, '../.env'));
+  loadEnvFile(path.resolve(__dirname, '../../.env'));
+}
 
 const isPlaceholder = (val) =>
   !val ||
