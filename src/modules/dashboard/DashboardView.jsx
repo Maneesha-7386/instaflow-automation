@@ -6,6 +6,7 @@ import Modal from '../../components/common/Modal';
 export default function DashboardView({ onNavigate }) {
   const { reels, automations, history, accounts, activeAccount } = useAccount();
   const [previewItem, setPreviewItem] = useState(null);
+  const [videoErrorId, setVideoErrorId] = useState(null);
 
   const primaryAccount =
     activeAccount ||
@@ -485,39 +486,57 @@ export default function DashboardView({ onNavigate }) {
           <div className="flex flex-col md:flex-row gap-5">
             {/* Visual Preview */}
             <div
-              className="w-full md:w-56 aspect-[9/14] rounded-2xl flex flex-col justify-between p-4 text-white shrink-0 shadow-lg relative overflow-hidden"
-              style={previewItem.videoUrl || previewItem.coverUrl ? { background: '#000' } : getGradientStyle(previewItem.hue)}
+              className={`w-full ${
+                !previewItem.videoUrl || videoErrorId === previewItem.id
+                  ? 'md:w-72 aspect-[9/14]'
+                  : 'md:w-60 aspect-[9/16]'
+              } rounded-2xl flex flex-col justify-between text-white shrink-0 shadow-lg relative overflow-hidden`}
+              style={
+                previewItem.videoUrl || previewItem.coverUrl || previewItem.permalink
+                  ? { background: '#000' }
+                  : getGradientStyle(previewItem.hue)
+              }
             >
-              {previewItem.videoUrl ? (
+              {previewItem.videoUrl && videoErrorId !== previewItem.id ? (
                 <video
+                  key={previewItem.id}
                   src={previewItem.videoUrl}
                   controls
+                  autoPlay
                   playsInline
                   referrerPolicy="no-referrer"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  onError={() => setVideoErrorId(previewItem.id)}
+                  className="w-full h-full object-cover"
+                />
+              ) : previewItem.permalink ? (
+                <iframe
+                  key={previewItem.id}
+                  src={`${previewItem.permalink.replace(/\/+$/, '')}/embed/`}
+                  title={previewItem.title}
+                  className="w-full h-full border-0 bg-white"
+                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                  allowFullScreen
                 />
               ) : previewItem.coverUrl ? (
                 <img
                   src={previewItem.coverUrl}
                   alt={previewItem.title}
                   referrerPolicy="no-referrer"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="w-full h-full object-cover"
                 />
-              ) : null}
-
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 backdrop-blur-xs self-start z-10">
-                {previewItem.kind || 'Reel'} {previewItem.igMediaId ? `#${previewItem.igMediaId.slice(-4)}` : ''}
-              </span>
-
-              {!previewItem.videoUrl && (
-                <div className="self-center w-12 h-12 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-lg shadow-xl z-10">
-                  ▶
+              ) : (
+                <div className="p-4 flex flex-col justify-between h-full">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 backdrop-blur-xs self-start z-10">
+                    {previewItem.kind || 'Reel'} {previewItem.igMediaId ? `#${previewItem.igMediaId.slice(-4)}` : ''}
+                  </span>
+                  <div className="self-center w-12 h-12 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-lg shadow-xl z-10">
+                    ▶
+                  </div>
+                  <div className="text-[11px] font-semibold drop-shadow z-10">
+                    <span>{previewItem.dateText}</span>
+                  </div>
                 </div>
               )}
-
-              <div className="text-[11px] font-semibold drop-shadow z-10">
-                <span>{previewItem.dateText}</span>
-              </div>
             </div>
 
             {/* Post Information */}

@@ -31,6 +31,7 @@ export default function ReelsView() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [accountFilter, setAccountFilter] = useState('all');
   const [previewReel, setPreviewReel] = useState(null);
+  const [videoErrorId, setVideoErrorId] = useState(null);
   const [isPublishingId, setIsPublishingId] = useState(null);
 
   // Filter reels by status and account
@@ -233,7 +234,11 @@ export default function ReelsView() {
               >
                 {/* 9:12 Cover Aspect Ratio */}
                 <div
-                  className="relative aspect-[9/12] flex flex-col justify-between p-3 text-white overflow-hidden select-none"
+                  onClick={() => {
+                    setVideoErrorId(null);
+                    setPreviewReel(reel);
+                  }}
+                  className="relative aspect-[9/12] flex flex-col justify-between p-3 text-white overflow-hidden select-none cursor-pointer"
                   style={reel.videoUrl || reel.coverUrl ? { background: '#000' } : getGradientStyle(reel.hue)}
                 >
                   {reel.videoUrl ? (
@@ -261,7 +266,8 @@ export default function ReelsView() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         deleteReel(reel.id);
                         showToast(`Deleted "${reel.title}"`);
                       }}
@@ -275,9 +281,13 @@ export default function ReelsView() {
                   {/* Preview Button Overlay */}
                   <button
                     type="button"
-                    onClick={() => setPreviewReel(reel)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setVideoErrorId(null);
+                      setPreviewReel(reel);
+                    }}
                     className="w-11 h-11 rounded-full bg-white/30 backdrop-blur-md self-center flex items-center justify-center text-white text-base shadow-xl group-hover:scale-110 transition-transform z-10 border-0 cursor-pointer"
-                    title="Preview content"
+                    title="Play Reel"
                   >
                     ▶
                   </button>
@@ -458,15 +468,37 @@ export default function ReelsView() {
         >
           <div className="flex flex-col gap-4">
             <div
-              className="w-full max-w-[260px] aspect-[9/16] mx-auto rounded-2xl overflow-hidden flex items-center justify-center relative text-white shadow-2xl"
+              className={`w-full ${
+                !previewReel.videoUrl || videoErrorId === previewReel.id
+                  ? 'max-w-[330px] aspect-[9/14]'
+                  : 'max-w-[270px] aspect-[9/16]'
+              } mx-auto rounded-2xl overflow-hidden flex items-center justify-center relative text-white shadow-2xl`}
               style={
-                previewReel.videoUrl || previewReel.coverUrl
+                previewReel.videoUrl || previewReel.coverUrl || previewReel.permalink
                   ? { background: '#000' }
                   : getGradientStyle(previewReel.hue)
               }
             >
-              {previewReel.videoUrl ? (
-                <video src={previewReel.videoUrl} controls referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+              {previewReel.videoUrl && videoErrorId !== previewReel.id ? (
+                <video
+                  key={previewReel.id}
+                  src={previewReel.videoUrl}
+                  controls
+                  autoPlay
+                  playsInline
+                  referrerPolicy="no-referrer"
+                  onError={() => setVideoErrorId(previewReel.id)}
+                  className="w-full h-full object-cover"
+                />
+              ) : previewReel.permalink ? (
+                <iframe
+                  key={previewReel.id}
+                  src={`${previewReel.permalink.replace(/\/+$/, '')}/embed/`}
+                  title={previewReel.title}
+                  className="w-full h-full border-0 bg-white"
+                  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                  allowFullScreen
+                />
               ) : previewReel.coverUrl ? (
                 <img src={previewReel.coverUrl} alt={previewReel.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
@@ -494,14 +526,26 @@ export default function ReelsView() {
 
             {previewReel.igMediaId && (
               <div
-                className="p-3 rounded-xl border text-xs flex items-center justify-between"
+                className="p-3 rounded-xl border text-xs flex items-center justify-between flex-wrap gap-2"
                 style={{ background: 'var(--sf2)', borderColor: 'var(--ln)' }}
               >
                 <div className="flex items-center gap-2">
                   <span className="text-[var(--ok)] font-bold">✓</span>
                   <span className="text-[var(--tx)] font-semibold">Live on Instagram</span>
                 </div>
-                <span className="text-[11px] font-mono text-[var(--mu)]">ID: {previewReel.igMediaId}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-mono text-[var(--mu)]">ID: {previewReel.igMediaId}</span>
+                  {previewReel.permalink && (
+                    <a
+                      href={previewReel.permalink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-bold text-[var(--br)] hover:underline no-underline"
+                    >
+                      Open on Instagram ↗
+                    </a>
+                  )}
+                </div>
               </div>
             )}
 
