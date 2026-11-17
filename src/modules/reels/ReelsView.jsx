@@ -16,6 +16,7 @@ const TABS = [
 export default function ReelsView() {
   const {
     reels,
+    syncLiveReels,
     accounts,
     activeAccount,
     moveReelToDrafts,
@@ -153,6 +154,21 @@ export default function ReelsView() {
 
           <button
             type="button"
+            onClick={() => {
+              if (syncLiveReels) {
+                syncLiveReels(activeAccount);
+                showToast('Synced real Instagram reels directly from Meta Graph API!');
+              }
+            }}
+            className="px-3.5 py-2 rounded-xl text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            title="Sync latest live Instagram reels from Meta Graph API"
+          >
+            <span>🔄</span>
+            <span>Sync Live Reels</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => openNewReelModal('normal')}
             className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md hover:opacity-95 transition-all border-0 flex items-center gap-1.5 cursor-pointer"
             style={{
@@ -226,12 +242,14 @@ export default function ReelsView() {
                       muted
                       playsInline
                       preload="metadata"
+                      referrerPolicy="no-referrer"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : reel.coverUrl ? (
                     <img
                       src={reel.coverUrl}
                       alt={reel.title}
+                      referrerPolicy="no-referrer"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : null}
@@ -448,9 +466,9 @@ export default function ReelsView() {
               }
             >
               {previewReel.videoUrl ? (
-                <video src={previewReel.videoUrl} controls className="w-full h-full object-cover" />
+                <video src={previewReel.videoUrl} controls referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : previewReel.coverUrl ? (
-                <img src={previewReel.coverUrl} alt={previewReel.title} className="w-full h-full object-cover" />
+                <img src={previewReel.coverUrl} alt={previewReel.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
                 <div className="flex flex-col items-center justify-center p-5 text-center">
                   <span className="text-3xl mb-2">🎬</span>

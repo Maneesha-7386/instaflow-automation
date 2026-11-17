@@ -342,12 +342,14 @@ export default function DashboardView({ onNavigate }) {
                       muted
                       playsInline
                       preload="metadata"
+                      referrerPolicy="no-referrer"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : item.coverUrl ? (
                     <img
                       src={item.coverUrl}
                       alt={item.title}
+                      referrerPolicy="no-referrer"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : null}
@@ -491,12 +493,14 @@ export default function DashboardView({ onNavigate }) {
                   src={previewItem.videoUrl}
                   controls
                   playsInline
+                  referrerPolicy="no-referrer"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : previewItem.coverUrl ? (
                 <img
                   src={previewItem.coverUrl}
                   alt={previewItem.title}
+                  referrerPolicy="no-referrer"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : null}

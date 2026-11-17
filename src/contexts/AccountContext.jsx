@@ -232,17 +232,25 @@ export function AccountProvider({ children }) {
         if (Array.isArray(parsed) && parsed.length > 0) {
           const hasGenericPlaceholders = parsed.some(
             (r) =>
+              r.title === 'Welcome to Eesha Verse' ||
+              r.title === 'Daily Inspiration Reel' ||
+              r.title === 'Reel' ||
               r.title?.includes('Behind the Scenes & Workflow') ||
               r.title?.includes('Trending Hook & Storytelling') ||
-              r.title?.includes('Welcome to Eesha Verse') ||
-              r.title?.includes('Daily Inspiration Reel') ||
               r.id?.startsWith('reel_') ||
               r.id?.startsWith('eesha_post') ||
-              r.id === 'eesha_reel_uploaded'
+              r.id === 'eesha_reel_uploaded' ||
+              (r.accountHandle?.toLowerCase().includes('eesha') &&
+                r.status === 'published' &&
+                r.igMediaId !== '18331270648256824' &&
+                r.igMediaId !== '17947450415998806')
           );
           if (!hasGenericPlaceholders) {
             return parsed;
           }
+          try {
+            localStorage.removeItem('instaflow_reels');
+          } catch {}
         }
       }
     } catch {}
@@ -453,19 +461,44 @@ export function AccountProvider({ children }) {
   // Synchronize live Instagram media feed for the active account
   useEffect(() => {
     if (activeAccount?.handle) {
+      const clean = activeAccount.handle.toLowerCase();
+      const isEesha = clean.includes('eesha');
+
+      // Check if current reels contain old dummy placeholders:
+      const hasStaleOrDummyReels = localReels.some(
+        (r) =>
+          r.title === 'Welcome to Eesha Verse' ||
+          r.title === 'Daily Inspiration Reel' ||
+          r.title === 'Reel' ||
+          r.id === 'eesha_reel_uploaded' ||
+          r.id?.startsWith('eesha_post') ||
+          r.id?.startsWith('reel_') ||
+          (isEesha &&
+            r.status === 'published' &&
+            r.igMediaId !== '18331270648256824' &&
+            r.igMediaId !== '17947450415998806')
+      );
+
       const matching = localReels.filter(
         (r) => r.accountId === activeAccount.id || r.accountHandle === activeAccount.handle
       );
-      if (matching.length === 0) {
+
+      if (matching.length === 0 || hasStaleOrDummyReels) {
         const generated = generateAccountMedia(activeAccount);
         if (generated.length > 0) {
           setLocalReels((prev) => {
-            const updated = [
-              ...generated,
-              ...prev.filter(
-                (r) => r.accountId !== activeAccount.id && r.accountHandle !== activeAccount.handle
-              ),
-            ];
+            const filteredPrev = prev.filter(
+              (r) =>
+                r.accountId !== activeAccount.id &&
+                r.accountHandle !== activeAccount.handle &&
+                r.title !== 'Welcome to Eesha Verse' &&
+                r.title !== 'Daily Inspiration Reel' &&
+                r.title !== 'Reel' &&
+                !r.id?.startsWith('eesha_post') &&
+                r.id !== 'eesha_reel_uploaded' &&
+                !r.id?.startsWith('reel_')
+            );
+            const updated = [...generated, ...filteredPrev];
             try {
               localStorage.setItem('instaflow_reels', JSON.stringify(updated));
             } catch {}
@@ -1255,6 +1288,34 @@ export function AccountProvider({ children }) {
     setIsNewReelModalOpen(true);
   };
 
+  const syncLiveReels = (targetAcc) => {
+    const acc = targetAcc || activeAccount;
+    if (!acc) return [];
+    try {
+      localStorage.removeItem('instaflow_reels');
+    } catch {}
+    const fresh = generateAccountMedia(acc);
+    setLocalReels((prev) => {
+      const filteredPrev = prev.filter(
+        (r) =>
+          r.accountId !== acc.id &&
+          r.accountHandle !== acc.handle &&
+          r.title !== 'Welcome to Eesha Verse' &&
+          r.title !== 'Daily Inspiration Reel' &&
+          r.title !== 'Reel' &&
+          !r.id?.startsWith('eesha_post') &&
+          r.id !== 'eesha_reel_uploaded' &&
+          !r.id?.startsWith('reel_')
+      );
+      const updated = [...fresh, ...filteredPrev];
+      try {
+        localStorage.setItem('instaflow_reels', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    return fresh;
+  };
+
   return (
     <AccountContext.Provider
       value={{
@@ -1269,6 +1330,7 @@ export function AccountProvider({ children }) {
         removeAccount,
 
         reels,
+        syncLiveReels,
         addReel,
         updateReel,
         duplicateReel,
