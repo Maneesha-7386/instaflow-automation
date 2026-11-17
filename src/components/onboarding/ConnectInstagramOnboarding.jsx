@@ -446,8 +446,14 @@ export default function ConnectInstagramOnboarding({
               <label className="block text-xs font-bold text-slate-800 mb-1.5">
                 Your Instagram username
               </label>
-              <div className="flex items-center px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/60 focus-within:bg-white focus-within:border-purple-600 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
-                <span className="text-slate-400 font-medium text-sm mr-1 select-none">@</span>
+              <div
+                className="flex items-center px-4 py-3 rounded-xl transition-all"
+                style={{
+                  background: '#ffffff',
+                  border: '1.5px solid #cbd5e1',
+                }}
+              >
+                <span className="font-bold text-base mr-1.5 select-none" style={{ color: '#7c3aed' }}>@</span>
                 <input
                   type="text"
                   required
@@ -457,14 +463,12 @@ export default function ConnectInstagramOnboarding({
                     setUsernameInput(e.target.value);
                     if (searchState !== 'idle') setSearchState('idle');
                   }}
-                  className="no-inner-border w-full flex-1 min-w-0 bg-transparent text-sm text-slate-800 font-medium placeholder-slate-400 p-0 m-0"
+                  className="w-full flex-1 min-w-0 text-sm font-semibold p-0 m-0 outline-none"
                   style={{
                     border: 'none',
                     outline: 'none',
-                    boxShadow: 'none',
-                    WebkitAppearance: 'none',
-                    MozAppearance: 'none',
                     background: 'transparent',
+                    color: '#0f172a',
                   }}
                 />
               </div>

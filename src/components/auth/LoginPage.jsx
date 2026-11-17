@@ -181,36 +181,44 @@ export default function LoginPage({ onLoginSuccess }) {
           {/* Top Bar: Live Status & Free Forever Badge */}
           <div className="flex items-center justify-between mb-5">
             <span
-              className="text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1.5"
+              className="text-[11px] font-extrabold px-3 py-1 rounded-full border flex items-center gap-1.5 shadow-xs"
               style={{
-                background: isFirebaseLive ? 'var(--oks)' : '#f3e8ff',
-                borderColor: isFirebaseLive ? 'var(--ok)' : '#d8b4fe',
-                color: isFirebaseLive ? 'var(--ok)' : '#7e22ce',
+                background: isFirebaseLive ? '#ecfdf5' : '#f5f3ff',
+                borderColor: isFirebaseLive ? '#10b981' : '#c4b5fd',
+                color: isFirebaseLive ? '#047857' : '#6b21a8',
               }}
             >
-              <span>●</span>
-              <span>{isFirebaseLive ? 'Live Firebase' : 'Instant Demo Ready'}</span>
+              <span className="text-xs">{isFirebaseLive ? '🟢' : '⚡'}</span>
+              <span>{isFirebaseLive ? 'Live Firebase Connected' : 'Instant Demo Ready'}</span>
             </span>
 
             {/* Free Forever Badge */}
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-100 flex items-center gap-1 shadow-xs">
+            <span
+              className="text-[11px] font-extrabold px-3 py-1 rounded-full border flex items-center gap-1.5 shadow-xs"
+              style={{
+                background: '#faf5ff',
+                borderColor: '#d8b4fe',
+                color: '#7e22ce',
+              }}
+            >
               <span>✨</span>
               <span>Free Forever</span>
             </span>
           </div>
 
           {/* Segmented Navigation Tabs: Sign In / Sign Up */}
-          <div className="flex border-b border-slate-200 mb-6">
+          <div className="flex p-1.5 rounded-2xl bg-slate-100/90 border border-slate-200/90 mb-6 gap-1 shadow-inner">
             <button
               type="button"
               onClick={() => switchMode('signin')}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-bold transition-all border-b-2 cursor-pointer ${
-                mode === 'signin'
-                  ? 'border-purple-600 text-purple-700'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs md:text-sm font-extrabold rounded-xl transition-all cursor-pointer border-0"
+              style={{
+                background: mode === 'signin' ? '#ffffff' : 'transparent',
+                color: mode === 'signin' ? '#6d28d9' : '#475569',
+                boxShadow: mode === 'signin' ? '0 2px 8px rgba(109, 40, 217, 0.16)' : 'none',
+              }}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               <span>Sign In</span>
@@ -219,13 +227,14 @@ export default function LoginPage({ onLoginSuccess }) {
             <button
               type="button"
               onClick={() => switchMode('signup')}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-bold transition-all border-b-2 cursor-pointer ${
-                mode === 'signup'
-                  ? 'border-purple-600 text-purple-700'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs md:text-sm font-extrabold rounded-xl transition-all cursor-pointer border-0"
+              style={{
+                background: mode === 'signup' ? '#ffffff' : 'transparent',
+                color: mode === 'signup' ? '#6d28d9' : '#475569',
+                boxShadow: mode === 'signup' ? '0 2px 8px rgba(109, 40, 217, 0.16)' : 'none',
+              }}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
               <span>Sign Up</span>
@@ -234,20 +243,27 @@ export default function LoginPage({ onLoginSuccess }) {
 
           {/* Header Title & Subtitle */}
           <div className="mb-5">
-            <h3 className="text-2xl font-black text-slate-900 m-0">
+            <h3 className="text-2xl font-black text-slate-900 m-0 tracking-tight" style={{ color: '#0f172a' }}>
               {mode === 'signin' ? 'Welcome Back!' : 'Create Your Account'}
             </h3>
-            <p className="text-xs md:text-sm text-slate-500 font-medium mt-1 m-0">
+            <p className="text-xs md:text-sm font-semibold mt-1.5 m-0" style={{ color: '#475569' }}>
               {mode === 'signin'
-                ? 'Sign in to your InstaFlow account'
-                : 'Start growing your Instagram with InstaFlow'}
+                ? 'Sign in to access your InstaFlow workspace'
+                : 'Start growing your Instagram creator workspace with InstaFlow'}
             </p>
           </div>
 
           {/* Error Message Alert */}
           {errorMsg && (
-            <div className="mb-4 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 border bg-rose-50 border-rose-200 text-rose-700 animate-fadeIn">
-              <span>⚠️</span>
+            <div
+              className="mb-4 p-3 rounded-xl text-xs font-bold flex items-center gap-2 border animate-fadeIn"
+              style={{
+                background: '#fff1f2',
+                borderColor: '#fecdd3',
+                color: '#be123c',
+              }}
+            >
+              <span className="text-sm">⚠️</span>
               <span className="flex-1">{errorMsg}</span>
             </div>
           )}
@@ -257,9 +273,12 @@ export default function LoginPage({ onLoginSuccess }) {
             {/* Full Name Field (Sign Up Only) */}
             {mode === 'signup' && (
               <div>
+                <label className="block text-xs font-bold mb-1.5" style={{ color: '#1e293b' }}>
+                  Full Name
+                </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#7c3aed' }}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </span>
@@ -268,7 +287,12 @@ export default function LoginPage({ onLoginSuccess }) {
                     placeholder="Enter your full name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 transition-all text-slate-800 placeholder-slate-400 bg-white"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl text-sm font-semibold outline-none transition-all shadow-xs"
+                    style={{
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      border: '1.5px solid #cbd5e1',
+                    }}
                   />
                 </div>
               </div>
@@ -276,43 +300,76 @@ export default function LoginPage({ onLoginSuccess }) {
 
             {/* Email Input Field with Mail Icon */}
             <div>
+              <label className="block text-xs font-bold mb-1.5" style={{ color: '#1e293b' }}>
+                Email Address
+              </label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#7c3aed' }}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </span>
                 <input
                   type="email"
                   required
-                  placeholder="Enter your email address"
+                  placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 transition-all text-slate-800 placeholder-slate-400 bg-white"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl text-sm font-semibold outline-none transition-all shadow-xs"
+                  style={{
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    border: '1.5px solid #cbd5e1',
+                  }}
                 />
               </div>
             </div>
 
             {/* Password Input Field with Lock & Eye Toggle Icon */}
             <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold" style={{ color: '#1e293b' }}>
+                  Password
+                </label>
+                {mode === 'signin' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotPasswordOpen(true);
+                      setForgotEmail(email);
+                      setForgotMsg(null);
+                    }}
+                    className="text-xs font-extrabold hover:underline border-0 bg-transparent p-0 cursor-pointer"
+                    style={{ color: '#7c3aed' }}
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: '#7c3aed' }}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </span>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="Enter your password"
+                  placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-11 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 transition-all text-slate-800 placeholder-slate-400 bg-white"
+                  className="w-full pl-10 pr-11 py-3 rounded-xl text-sm font-semibold outline-none transition-all shadow-xs"
+                  style={{
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    border: '1.5px solid #cbd5e1',
+                  }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0 border-0 bg-transparent"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 cursor-pointer p-0 border-0 bg-transparent transition-colors"
+                  style={{ color: '#64748b' }}
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
@@ -329,49 +386,36 @@ export default function LoginPage({ onLoginSuccess }) {
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password Row */}
-            <div className="flex items-center justify-between text-xs pt-0.5">
-              <label className="flex items-center gap-2 cursor-pointer text-slate-600 font-medium">
+            {/* Remember Me Checkbox Row */}
+            <div className="flex items-center justify-between text-xs pt-1">
+              <label className="flex items-center gap-2 cursor-pointer font-bold text-xs" style={{ color: '#334155' }}>
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded text-purple-600 border-slate-300 focus:ring-purple-500 cursor-pointer"
                 />
-                <span>Remember me</span>
+                <span>Remember me on this browser</span>
               </label>
-
-              {mode === 'signin' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsForgotPasswordOpen(true);
-                    setForgotEmail(email);
-                    setForgotMsg(null);
-                  }}
-                  className="font-semibold text-purple-600 hover:text-purple-700 hover:underline border-0 bg-transparent p-0 cursor-pointer"
-                >
-                  Forgot password?
-                </button>
-              )}
             </div>
 
             {/* Primary Action Button with Gradient */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-6 rounded-xl font-bold text-white text-sm shadow-lg hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer border-0 disabled:opacity-50 mt-1"
+              className="w-full py-3.5 px-6 rounded-xl font-extrabold text-sm shadow-lg hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer border-0 disabled:opacity-50 mt-1.5"
               style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)',
-                boxShadow: '0 10px 25px -5px rgba(139, 92, 246, 0.45)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 45%, #ec4899 100%)',
+                color: '#ffffff',
+                boxShadow: '0 10px 25px -4px rgba(139, 92, 246, 0.45)',
               }}
             >
               {loading ? (
                 <span>Processing...</span>
               ) : (
                 <>
-                  <span>➔</span>
-                  <span>{mode === 'signin' ? 'Sign In' : 'Sign Up'}</span>
+                  <span className="text-base font-black">➔</span>
+                  <span className="tracking-wide">{mode === 'signin' ? 'Sign In to Workspace' : 'Create Free Account'}</span>
                 </>
               )}
             </button>
@@ -380,20 +424,27 @@ export default function LoginPage({ onLoginSuccess }) {
           {/* Divider OR */}
           <div className="flex items-center gap-3 my-5">
             <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400">
+            <span className="text-[11px] uppercase font-black tracking-widest text-slate-400" style={{ color: '#64748b' }}>
               OR
             </span>
             <div className="flex-1 h-px bg-slate-200" />
           </div>
 
           {/* Social Logins: Google & Demo Mode */}
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-3">
             {/* Continue with Google */}
             <button
               type="button"
               disabled={loading}
               onClick={handleGoogleAuth}
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-slate-200 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-xs"
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl transition-all cursor-pointer hover:bg-slate-50 shadow-xs"
+              style={{
+                background: '#ffffff',
+                border: '1.5px solid #cbd5e1',
+                color: '#0f172a',
+                fontWeight: 700,
+                fontSize: '14px',
+              }}
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path
@@ -420,25 +471,33 @@ export default function LoginPage({ onLoginSuccess }) {
             <button
               type="button"
               onClick={handleQuickDemo}
-              className="w-full py-3 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer bg-purple-50/90 hover:bg-purple-100 text-purple-900 border border-purple-200/90"
+              className="w-full py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:opacity-95"
+              style={{
+                background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+                border: '1.5px solid #c4b5fd',
+                color: '#581c87',
+                fontWeight: 800,
+                fontSize: '14px',
+              }}
             >
-              <span className="text-xs">▶</span>
-              <span>Try Demo Mode</span>
+              <span className="text-xs" style={{ color: '#7c3aed' }}>▶</span>
+              <span>Try Demo Mode (Instant Access)</span>
             </button>
           </div>
 
           {/* Bottom Switch Link */}
-          <div className="text-center pt-5 mt-5 border-t border-slate-100">
-            <p className="text-xs text-slate-500 font-medium m-0">
+          <div className="text-center pt-5 mt-5 border-t border-slate-200">
+            <p className="text-xs font-semibold m-0" style={{ color: '#475569' }}>
               {mode === 'signin' ? (
                 <>
                   Don't have an account?{' '}
                   <button
                     type="button"
                     onClick={() => switchMode('signup')}
-                    className="font-bold text-purple-600 hover:text-purple-700 hover:underline border-0 bg-transparent p-0 cursor-pointer"
+                    className="font-extrabold hover:underline border-0 bg-transparent p-0 cursor-pointer"
+                    style={{ color: '#7c3aed' }}
                   >
-                    Sign Up
+                    Sign Up for Free
                   </button>
                 </>
               ) : (
@@ -447,9 +506,10 @@ export default function LoginPage({ onLoginSuccess }) {
                   <button
                     type="button"
                     onClick={() => switchMode('signin')}
-                    className="font-bold text-purple-600 hover:text-purple-700 hover:underline border-0 bg-transparent p-0 cursor-pointer"
+                    className="font-extrabold hover:underline border-0 bg-transparent p-0 cursor-pointer"
+                    style={{ color: '#7c3aed' }}
                   >
-                    Sign In
+                    Sign In Here
                   </button>
                 </>
               )}
@@ -498,16 +558,21 @@ export default function LoginPage({ onLoginSuccess }) {
 
             <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold mb-1.5" style={{ color: '#1e293b' }}>
                   Your Account Email
                 </label>
                 <input
                   type="email"
                   required
-                  placeholder="creator@lumenstudio.com"
+                  placeholder="name@example.com"
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 transition-all text-slate-800"
+                  className="w-full px-3.5 py-2.5 rounded-xl text-sm font-semibold outline-none transition-all"
+                  style={{
+                    background: '#ffffff',
+                    color: '#0f172a',
+                    border: '1.5px solid #cbd5e1',
+                  }}
                 />
               </div>
 
@@ -515,14 +580,23 @@ export default function LoginPage({ onLoginSuccess }) {
                 <button
                   type="button"
                   onClick={() => setIsForgotPasswordOpen(false)}
-                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 cursor-pointer"
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold hover:bg-slate-50 cursor-pointer transition-colors"
+                  style={{
+                    color: '#334155',
+                    border: '1.5px solid #cbd5e1',
+                    background: '#ffffff',
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-md cursor-pointer border-0 disabled:opacity-50"
+                  className="flex-1 py-2.5 px-4 rounded-xl text-xs font-extrabold shadow-md cursor-pointer border-0 disabled:opacity-50 transition-opacity"
+                  style={{
+                    color: '#ffffff',
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+                  }}
                 >
                   {forgotLoading ? 'Sending...' : 'Send Reset Link'}
                 </button>

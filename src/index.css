@@ -77,7 +77,6 @@ body {
 
 button, input, select, textarea {
   font: inherit;
-  color: inherit;
 }
 
 button {
@@ -85,41 +84,18 @@ button {
 }
 
 :focus-visible {
-  outline: none !important;
+  outline: none;
 }
 
-/* Strip ugly native and focus-visible square outlines from all inputs */
-input,
-textarea,
-select {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  -webkit-appearance: none !important;
-  -moz-appearance: none !important;
-  appearance: none !important;
-  -webkit-tap-highlight-color: transparent !important;
-}
-
-input:focus,
-input:focus-visible,
-input:active,
-input:hover,
-textarea:focus,
-textarea:focus-visible,
-textarea:active,
-select:focus,
-select:focus-visible,
-select:active {
-  border: none !important;
-  border-width: 0 !important;
-  border-style: none !important;
-  outline: none !important;
-  outline-width: 0 !important;
-  outline-style: none !important;
-  box-shadow: none !important;
-  -webkit-box-shadow: none !important;
-  -webkit-tap-highlight-color: transparent !important;
+/* Chrome/Safari Autofill color protection - ensures text is always readable */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Bulletproof borderless input utility */
