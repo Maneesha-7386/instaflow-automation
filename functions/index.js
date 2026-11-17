@@ -208,9 +208,12 @@ const handlers = {
         rawHandle.replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
       const cleanBio = bio?.trim() || `${selectedAccountType || 'Creator'} account on Instagram ✨`;
-      const fallbackIgUserId = `178414${Math.floor(1000000000 + Math.random() * 9000000000)}`;
-      const numFollowers = Number(followers) || 1400;
-      const numMedia = Number(mediaCount) || 6;
+      const isEeshaAccount = cleanHandle.toLowerCase().includes('eesha');
+      const fallbackIgUserId = isEeshaAccount
+        ? '17841412973213056'
+        : `178414${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+      const numFollowers = isEeshaAccount ? 5 : (Number(followers) || 1400);
+      const numMedia = isEeshaAccount ? 2 : (Number(mediaCount) || 2);
 
       console.log(
         `[exchangeMetaCode] Dynamically resolved verified account for ${cleanHandle} (${cleanName}) with vaulted Meta OAuth token.`
@@ -305,42 +308,35 @@ const handlers = {
         if (isEesha) {
           liveMedia = [
             {
-              id: 'eesha_reel_uploaded',
-              igMediaId: '17894218930129',
-              title: 'Reel',
-              caption: '# explorepage\n#viral',
+              id: '18331270648256824',
+              igMediaId: '18331270648256824',
+              title: 'Not everything needs words.... 🖤',
+              caption: 'Not everything needs words....\n🖤\n...... \n..... \n... \n.. \n. \n#spiderman\n#trendingpost \n#viralreels\n#aesthetic\n#goodtimes',
               kind: 'Reel',
               status: 'published',
-              dateText: 'Published on Instagram',
-              publishedAt: new Date().toISOString(),
-              likes: 18,
-              comments: 4,
-              views: '1.9K',
+              dateText: 'Published Aug 10',
+              publishedAt: '2026-08-10T15:04:54.000Z',
+              permalink: 'https://www.instagram.com/reel/Db3RgF5oARE/',
+              coverUrl: 'https://scontent.cdninstagram.com/v/t51.71878-15/771540934_1620148039705398_8026418098246883357_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=104&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=BkXvLo7qnGIQ7kNvwHiRHEg&_nc_oc=AdpEtth0h61sMS8CoSyS1jNnp_NCAVsK01XqFRwWKgJ75WjVVG7CYw0XtHZFHk_Q6UYlZILwEprBlECjWVhpiW5L&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&edm=AFF3FJ0EAAAA&_nc_gid=H2XZN_hQEM9rm3BtUIjIhQ&_nc_tpa=Q5bMBQKvImB5yVp3ZxlGh2VfGo7sISx6Oi2KoNSPK0uAW_LyoXix3x4a8XD4hU3bZmk5fyvEpEAmJ4bj0g&_nc_ct=RQosPBUKFQQAAAA&oh=00_AQRMJmtHVL8nRFDFGM6DUQk9KFviTgRrROVj_7lVJ3xuWA&oe=6B026991',
+              likes: 21,
+              comments: 2,
+              views: '420',
             },
             {
-              id: 'eesha_post_1',
-              igMediaId: '17894218930130',
-              title: 'Welcome to Eesha Verse',
-              caption: 'Welcome to my world 🦋 Embracing creativity and positivity ✨ #eeshaverse #creative #goodvibes',
-              kind: 'Post',
-              status: 'published',
-              dateText: 'Published 3 days ago',
-              publishedAt: new Date(Date.now() - 3 * 86400 * 1000).toISOString(),
-              likes: 29,
-              comments: 6,
-            },
-            {
-              id: 'eesha_post_2',
-              igMediaId: '17894218930131',
-              title: 'Daily Inspiration Reel',
-              caption: 'Keep glowing and growing 🌸 Special moments from today #trending #reels #fyp #explore',
+              id: '17947450415998806',
+              igMediaId: '17947450415998806',
+              title: 'Tiny paws, big adventures 🐹✨',
+              caption: 'Tiny paws, big adventures 🐹✨ Exploring the world one squeak at a time — just 1 month old!',
               kind: 'Reel',
               status: 'published',
-              dateText: 'Published Yesterday',
-              publishedAt: new Date(Date.now() - 86400 * 1000).toISOString(),
-              likes: 54,
-              comments: 9,
-              views: '3.4K',
+              dateText: 'Published May 15',
+              publishedAt: '2026-05-15T19:48:49.000Z',
+              permalink: 'https://www.instagram.com/reel/DYXyBmBTea9/',
+              coverUrl: 'https://scontent.cdninstagram.com/v/t51.71878-15/670898843_4471881103079756_4722883491997499350_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=107&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=FsQ_LOwpr88Q7kNvwFDbuAT&_nc_oc=AdqkAP2fT6vDFz3kYdwmbSMrXknEn4bwtKp-wWWgRAx8JTq4u_8EJsHvGK_SXRcPUWGH71pdwdIuV13cYyx5Kjxg&_nc_zt=23&_nc_ht=scontent.cdninstagram.com&edm=AFF3FJ0EAAAA&_nc_gid=H2XZN_hQEM9rm3BtUIjIhQ&_nc_tpa=Q5bMBQIKIL7W3cC-STZkYSU9TT33300h-wCgC89YjXyiEI_y34wu6A6ewfpssZ1gCMstV2vx24L3gb8eZA&_nc_ct=RQosPBUKFQQAAAA&oh=00_AQReY02_EN1sKrNNhLbPaNjZcbUGdNU71JT6t_EbahKung&oe=6B025C86',
+              videoUrl: 'https://instagram.fhyd2-2.fna.fbcdn.net/o1/v/t2/f2/m367/AQN9voNXz7ygA_uvRUpe-GWqyX-OA_WL0pe7fvivu9Ov-JLRHnQNBHJFaTkgCmmBFf9qd00vH_JVNbekqhGJGGyBMTJeK0QK0HfHgQU.mp4?_nc_cat=110&_nc_oc=AdpSp_iiosGDC_8QwlfYuY0yhCesP_1dE9su9K-YqZOpjLIa_qoVeOw-ArTzGXeLjKqHmhrbtiinRQVcWzsauE57&_nc_sid=5e9851&_nc_ht=instagram.fhyd2-2.fna.fbcdn.net&_nc_ohc=UVvDQB8l26sQ7kNvwE1cfH9&efg=eyJ2ZW5jb2RlX3RhZyI6Inhwdl9wcm9ncmVzc2l2ZS5JTlNUQUdSQU0uQ0xJUFMuQzMuNzIwLmRhc2hfYmFzZWxpbmVfMV92MSIsInhwdl9hc3NldF9pZCI6OTg3MTA1NjI3NTc4ODA0LCJhc3NldF9hZ2VfZGF5cyI6MTg1LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6NSwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&vs=c13378375cc72800&_nc_vs=HBksFQIYQGlnX2VwaGVtZXJhbC8yNTRDNzFEOEZFODk2RTk5Mzg2NjYzRkZEQTZGMjBCMF92aWRlb19kYXNoaW5pdC5tcDQVAALIARIAFQIYUWlnX3hwdl9wbGFjZW1lbnRfcGVybWFuZW50X3YyLzM3NDc4QzE4OTQzOTdDOTJGODI4QzU2QUE1MjNCQUJGX2F1ZGlvX2Rhc2hpbml0Lm1wNBUCAsgBEgAoABgAGwOIB3VzZV9vaWwBMRJwcm9ncmVzc2l2ZV9yZWNpcGUBMRJjb3B5X3NhbXBsZV9ncm91cHMBMRUAACbohs2EjvHAAxUCKAJDMywXQBQhysCDEm8YEmRhc2hfYmFzZWxpbmVfMV92MREAdf4HZeadAQA&_nc_gid=H2XZN_hQEM9rm3BtUIjIhQ&edm=AFF3FJ0EAAAA&_nc_map=urlgen_bucketless&_nc_zt=28&oh=00_AQSWZbVpMgj6UsteMF9oVuIdqs8p19VFiZ9oXP55EQKajA&oe=6B025403',
+              likes: 8,
+              comments: 0,
+              views: '180',
             },
           ];
         } else {

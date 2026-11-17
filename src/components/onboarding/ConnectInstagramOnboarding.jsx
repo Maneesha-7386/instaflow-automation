@@ -38,12 +38,14 @@ function generateDynamicAccount(rawHandle, isUpgraded = false) {
   // Case 1: Eesha Verse account (CreatorFlow Images 2 & 5)
   if (cleanLower === 'its_eesha14' || cleanLower.includes('eesha')) {
     acc = {
+      id: '17841412973213056',
+      igUserId: '17841412973213056',
       handle: '@its_eesha14',
       name: '@ 🦋 Eesha Verse',
       bio: '🦋turning silence into words✨',
       followers: '5',
       followersCount: 5,
-      mediaCount: 3,
+      mediaCount: 2,
       accountType: 'Creator',
       category: 'Digital Creator',
       initials: 'EV',
